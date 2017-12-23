@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"formation/terraform"
+	"formation/terraform_helpers"
 	"strconv"
 	"strings"
 )
@@ -47,7 +47,7 @@ func (p *InstanceStateParser) currentResource() *InlineResource {
 	return p.state().parent
 }
 
-func (p *InstanceStateParser) Parse(state *terraform.InstanceState) *Resource {
+func (p *InstanceStateParser) Parse(state *terraform_helpers.InstanceState) *Resource {
 	resource := new(Resource)
 	sortedState := state.ToSorted()
 
@@ -94,32 +94,112 @@ func (p *InstanceStateParser) Parse(state *terraform.InstanceState) *Resource {
 //expanded_array_key.8888.nested_scalar_key = nested_scalar_value_2
 
 func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
+	fmt.Printf("***** Attribute %s - depth %i\n\n\n", attribute, p.state().depth)
 	// We cannot establish the prefix for a list item until we first encounter it.
 	if p.state().parentType == PARENT_LIST && p.state().prefix == "" {
-		fmt.Println("I am in a list and I have no prefix to match")
+		fmt.Print("We are in a list with an unestablished prefix!!\n")
+		// Determine whether this is a list of scalar objects or a list of nested objects.
 		parts := strings.Split(attribute, ".")
-		p.state().prefix = strings.Join(parts[:p.state().depth], ".") + "."
+
+		// For scalar lists this is just a unique key for this entry. For nested objects
+		// the first entry contains both that unique key _and_ the first nested field.
+		fmt.Printf("Depth is %i\n", p.state().depth)
+		fmt.Printf("Split parts is %s\n", parts)
+		listPrefix := strings.Join(parts[p.state().depth-1:], ".")
+
+		fmt.Printf("The list prefix is %s\n", listPrefix)
+
+		if strings.ContainsRune(listPrefix, '.') {
+			fmt.Printf("This is a nested resource, because it contains a dot\n")
+			// Create a new nested resource
+			field := &Field{
+				FieldType:   NESTED,
+				Key:         "",
+				NestedValue: new(InlineResource),
+			}
+			p.currentResource().Append(field)
+
+			// Push this entry onto the stack.
+			s := &State{
+				parent:            field.NestedValue,
+				remainingChildren: 0,
+				parentType:        PARENT_MAP,
+				depth:             p.state().depth + 0,
+				prefix:            strings.Join(parts[:p.state().depth], ".") + ".",
+			}
+			p.pushState(s)
+		} else {
+			fmt.Printf("This is not a nested resource\n")
+			// This is a list of scalar objects
+			p.state().prefix = strings.Join(parts[:p.state().depth], ".")
+		}
 	}
 
+	fmt.Printf("Comparing %s to %s\n", attribute, p.state().prefix)
 	if !strings.HasPrefix(attribute, p.state().prefix) {
+		fmt.Printf("End of prefix matching, adding a new stack item\n")
+
+		// We should also pop if we've reached the end of key
+		// TODO(jimmy): Is this always safe?
+		if p.stateStack[len(p.stateStack)-2].parentType == PARENT_LIST {
+			_ = p.popState()
+		}
+
 		// This is a sign that we've either reached the end of a map, or the end of a single
 		// item in a list.
+		fmt.Printf("Remaining children: %i\n", p.state().remainingChildren)
 		p.state().remainingChildren -= 1
+		fmt.Printf("Remaining children: %i\n", p.state().remainingChildren)
 		if p.state().remainingChildren == 0 {
+			fmt.Printf("End of entries to parse\n")
 			// Pop an entry off the stack
 			_ = p.popState()
 		}
 
 		// If this is a list, we need to reset the matched prefix.
+		// TODO(jimmy): Factor this out into a single method
 		if p.state().parentType == PARENT_LIST {
+			fmt.Printf("We are still in a list, let's reset the state\n")
 			// This is a bad thing to do, as it clears any previous nesting
 			// but it's OK because the next field we see will restore it.
-			p.state().prefix = ""
-		}
+			// Determine whether this is a list of scalar objects or a list of nested objects.
+			parts := strings.Split(attribute, ".")
 
-	} else {
-		attribute = strings.TrimPrefix(attribute, p.state().prefix)
+			// For scalar lists this is just a unique key for this entry. For nested objects
+			// the first entry contains both that unique key _and_ the first nested field.
+			listPrefix := strings.Join(parts[p.state().depth-1:], ".")
+
+			fmt.Printf("The new list prefix is %s\n", listPrefix)
+
+			if strings.ContainsRune(listPrefix, '.') {
+				// This is a list of nested resource
+				// Create a new nested resource
+				field := &Field{
+					FieldType:   NESTED,
+					Key:         "",
+					NestedValue: new(InlineResource),
+				}
+				p.currentResource().Append(field)
+
+				// Push this entry onto the stack.
+				s := &State{
+					parent:            field.NestedValue,
+					remainingChildren: 0,
+					parentType:        PARENT_MAP,
+					depth:             p.state().depth + 0,
+					prefix:            strings.Join(parts[:p.state().depth], ".") + ".",
+				}
+				p.pushState(s)
+			} else {
+				// This is a list of scalar objects
+				p.state().prefix = strings.Join(parts[:p.state().depth], ".")
+			}
+			//attribute = strings.TrimPrefix(attribute, p.state().prefix)
+		}
 	}
+	//else {
+	attribute = strings.TrimPrefix(attribute, p.state().prefix)
+	//}
 
 	fmt.Printf("The current prefix is: %s\n", p.state().prefix)
 	fmt.Printf("Looking for dot rune in attribute %s\n", attribute)
@@ -148,7 +228,7 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 				parent:            field.NestedValue,
 				remainingChildren: children + 1,
 				parentType:        PARENT_MAP,
-				depth:             1,
+				depth:             p.state().depth + 1,
 				prefix:            p.state().prefix + fieldName + ".",
 			}
 			p.pushState(s)
@@ -157,25 +237,26 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 		// Is this the beginning of a list?
 		if parts[0] == "#" {
 			children, _ := strconv.Atoi(value)
+			if children != 0 {
+				field := &Field{
+					FieldType:   LIST,
+					Key:         fieldName,
+					NestedValue: new(InlineResource),
+				}
+				p.currentResource().Append(field)
 
-			field := &Field{
-				FieldType:   LIST,
-				Key:         fieldName,
-				NestedValue: new(InlineResource),
+				// Push this entry onto the stack.
+				s := &State{
+					parent:            field.NestedValue,
+					remainingChildren: children,
+					parentType:        PARENT_LIST,
+					depth:             p.state().depth + 2,
+					prefix:            "", //p.state().prefix + fieldName + ".",
+				}
+				p.pushState(s)
+
+				fmt.Println("Appending a LIST resource")
 			}
-			p.currentResource().Append(field)
-
-			// Push this entry onto the stack.
-			s := &State{
-				parent:            field.NestedValue,
-				remainingChildren: children + 1,
-				parentType:        PARENT_LIST,
-				depth:             2,
-				prefix:            "", //p.state().prefix + fieldName + ".",
-			}
-			p.pushState(s)
-
-			fmt.Println("Appending a LIST resource")
 		}
 	}
 }
