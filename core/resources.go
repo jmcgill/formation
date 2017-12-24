@@ -1,5 +1,7 @@
 package core
 
+import "github.com/hashicorp/terraform/terraform"
+
 type FieldType int
 
 const (
@@ -20,12 +22,15 @@ func (r *InlineResource) Append(field *Field) {
 type ScalarValue struct {
 	StringValue  string
 	IntegerValue int32
-	BooleanValue bool
+	IsBool       bool
 }
 
 type Field struct {
 	FieldType FieldType
 	Key       string
+	Computed  bool
+	Link      string
+	Path      string
 
 	// Only one of these may be filled in
 	ScalarValue *ScalarValue
@@ -35,5 +40,6 @@ type Field struct {
 type Resource struct {
 	Type   string
 	Name   string
+	State  *terraform.InstanceState
 	Fields *InlineResource
 }

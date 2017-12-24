@@ -2,20 +2,23 @@ package core
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 )
 
 const INDENT = 4
 
 type Printer struct {
-	output        bytes.Buffer
+	output        *io.Writer
 	currentIndent int
 }
 
 func (p *Printer) write(format string, a ...interface{}) {
-	p.output.WriteString(strings.Repeat(" ", p.currentIndent))
-	p.output.WriteString(fmt.Sprintf(format, a...))
+	fmt.Fprintf(*p.output, "%s", strings.Repeat(" ", p.currentIndent))
+	fmt.Fprintf(*p.output, format, a...)
 }
 
 func (p *Printer) indent() {
@@ -88,8 +91,25 @@ func (p *Printer) printList(key string, resource *InlineResource) {
 }
 
 func (p *Printer) printField(field *Field) {
-	if field.FieldType == SCALAR {
-		p.write("%s = \"%s\"\n", field.Key, field.ScalarValue.StringValue)
+	if field.Computed == true {
+		return
+	}
+
+	if field.Link != "" {
+		p.write("%s = \"${%s}\"\n", field.Key, field.Link)
+	} else if field.FieldType == SCALAR {
+		if field.ScalarValue.IsBool {
+			if field.ScalarValue.StringValue == "true" {
+				p.write("%s = true\n", field.Key)
+			} else {
+				p.write("%s = false\n", field.Key)
+			}
+		} else {
+			if !p.printJSON(field) {
+				p.write("%s = \"%s\"\n", field.Key, strings.Replace(field.ScalarValue.StringValue, "\"", "\\\"", -1))
+			}
+		}
+
 	} else if field.FieldType == MAP {
 		p.printMap(field.Key, field.NestedValue)
 	} else if field.FieldType == LIST {
@@ -97,10 +117,41 @@ func (p *Printer) printField(field *Field) {
 	}
 }
 
+func (p *Printer) printJSON(field *Field) bool {
+	if field.ScalarValue.StringValue[0] != '{' {
+		return false
+	}
+
+	var d map[string]interface{}
+	err := json.Unmarshal([]byte(field.ScalarValue.StringValue), &d)
+	if err != nil {
+		fmt.Printf("This doesn't appear to be JSON\n")
+		return false
+	}
+
+	s, _ := json.MarshalIndent(d, "", "    ")
+	p.write("%s = <<EOF\n%sEOF\n", field.Key, s)
+	return true
+}
+
 func (p *Printer) Print(resource *Resource) string {
-	p.output.Reset()
+	buf := bytes.Buffer{}
+	writer := io.Writer(&buf)
+
+	p.output = &writer
 	p.write("resource \"%s\" \"%s\" {\n", resource.Type, resource.Name)
 	p.printInlineResource(resource.Fields)
 	p.write("}")
-	return p.output.String()
+
+	return buf.String()
+}
+
+// HACK - pass an io.Writer in always, convert tests to handle this
+func (p *Printer) PrintToFile(file *os.File, resource *Resource) {
+	writer := io.Writer(file)
+	p.output = &writer
+
+	p.write("resource \"%s\" \"%s\" {\n", resource.Type, resource.Name)
+	p.printInlineResource(resource.Fields)
+	p.write("}")
 }

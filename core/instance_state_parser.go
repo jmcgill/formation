@@ -5,6 +5,9 @@ import (
 	"formation/terraform_helpers"
 	"strconv"
 	"strings"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 type ParentType int
@@ -47,9 +50,18 @@ func (p *InstanceStateParser) currentResource() *InlineResource {
 	return p.state().parent
 }
 
-func (p *InstanceStateParser) Parse(state *terraform_helpers.InstanceState) *Resource {
-	resource := new(Resource)
-	sortedState := state.ToSorted()
+func (p *InstanceStateParser) Parse(state *terraform.InstanceState) *Resource {
+	fmt.Printf("I HAVE BEGUN PARSING AND THE ID IS %s\n\n", state.Attributes["id"])
+
+	resource := &Resource{
+		State: state,
+	}
+
+	var wrappedState terraform_helpers.InstanceState
+	wrappedState = terraform_helpers.InstanceState(*state)
+	sortedState := wrappedState.ToSorted()
+
+	spew.Dump(sortedState)
 
 	s := State{
 		remainingChildren: 0,
@@ -94,7 +106,10 @@ func (p *InstanceStateParser) Parse(state *terraform_helpers.InstanceState) *Res
 //expanded_array_key.8888.nested_scalar_key = nested_scalar_value_2
 
 func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
-	fmt.Printf("***** Attribute %s - depth %i\n\n\n", attribute, p.state().depth)
+	// HACK
+	originalAttribute := attribute
+
+	fmt.Printf("Attribute %s - depth %i\n", attribute, p.state().depth)
 	// We cannot establish the prefix for a list item until we first encounter it.
 	if p.state().parentType == PARENT_LIST && p.state().prefix == "" {
 		fmt.Print("We are in a list with an unestablished prefix!!\n")
@@ -139,21 +154,25 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 	if !strings.HasPrefix(attribute, p.state().prefix) {
 		fmt.Printf("End of prefix matching, adding a new stack item\n")
 
-		// We should also pop if we've reached the end of key
-		// TODO(jimmy): Is this always safe?
-		if p.stateStack[len(p.stateStack)-2].parentType == PARENT_LIST {
-			_ = p.popState()
-		}
+		for !strings.HasPrefix(attribute, p.state().prefix) {
+			// We should also pop if we've reached the end of key
+			// TODO(jimmy): Is this always safe?
+			if p.stateStack[len(p.stateStack)-2].parentType == PARENT_LIST {
+				_ = p.popState()
+			}
 
-		// This is a sign that we've either reached the end of a map, or the end of a single
-		// item in a list.
-		fmt.Printf("Remaining children: %i\n", p.state().remainingChildren)
-		p.state().remainingChildren -= 1
-		fmt.Printf("Remaining children: %i\n", p.state().remainingChildren)
-		if p.state().remainingChildren == 0 {
-			fmt.Printf("End of entries to parse\n")
-			// Pop an entry off the stack
-			_ = p.popState()
+			// This is a sign that we've either reached the end of a map, or the end of a single
+			// item in a list.
+			fmt.Printf("Remaining children: %i\n", p.state().remainingChildren)
+			p.state().remainingChildren -= 1
+			fmt.Printf("Remaining children: %i\n", p.state().remainingChildren)
+			if p.state().remainingChildren == 0 {
+				fmt.Printf("End of entries to parse\n")
+				// Pop an entry off the stack
+				_ = p.popState()
+			} else {
+				break
+			}
 		}
 
 		// If this is a list, we need to reset the matched prefix.
@@ -178,6 +197,7 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 					FieldType:   NESTED,
 					Key:         "",
 					NestedValue: new(InlineResource),
+					Path:        originalAttribute,
 				}
 				p.currentResource().Append(field)
 
@@ -206,7 +226,7 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 
 	if !strings.ContainsRune(attribute, '.') {
 		fmt.Printf("Parsing a simple attribute\n")
-		p.parseSimpleAttribute(attribute, value)
+		p.parseSimpleAttribute(attribute, originalAttribute, value)
 	} else {
 		parts := strings.Split(attribute, ".")
 		fieldName, parts := parts[0], parts[1:]
@@ -214,24 +234,28 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 		// Is this the beginning of a map?
 		if parts[0] == "%" {
 			children, _ := strconv.Atoi(value)
+			if children != 0 {
+				// Is this the map declaration?
+				field := &Field{
+					FieldType:   MAP,
+					Key:         fieldName,
+					NestedValue: new(InlineResource),
+					Path:        strings.Replace(originalAttribute, ".%", "", -1),
+				}
+				p.currentResource().Append(field)
 
-			// Is this the map declaration?
-			field := &Field{
-				FieldType:   MAP,
-				Key:         fieldName,
-				NestedValue: new(InlineResource),
-			}
-			p.currentResource().Append(field)
+				// Push this entry onto the stack.
+				s := &State{
+					parent:            field.NestedValue,
+					remainingChildren: children,
+					parentType:        PARENT_MAP,
+					depth:             p.state().depth + 1,
+					prefix:            p.state().prefix + fieldName + ".",
+				}
+				p.pushState(s)
 
-			// Push this entry onto the stack.
-			s := &State{
-				parent:            field.NestedValue,
-				remainingChildren: children + 1,
-				parentType:        PARENT_MAP,
-				depth:             p.state().depth + 1,
-				prefix:            p.state().prefix + fieldName + ".",
+				fmt.Printf("Now in a Map\n")
 			}
-			p.pushState(s)
 		}
 
 		// Is this the beginning of a list?
@@ -242,6 +266,7 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 					FieldType:   LIST,
 					Key:         fieldName,
 					NestedValue: new(InlineResource),
+					Path:        strings.Replace(originalAttribute, ".#", "", -1),
 				}
 				p.currentResource().Append(field)
 
@@ -259,14 +284,23 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 			}
 		}
 	}
+
+	fmt.Printf("-----------\n\n")
 }
 
-func (p *InstanceStateParser) parseSimpleAttribute(attribute string, value string) {
+func (p *InstanceStateParser) parseSimpleAttribute(attribute string, path string, value string) {
 	fieldValue := ScalarValue{StringValue: value}
 	field := &Field{
 		FieldType:   SCALAR,
 		Key:         attribute,
 		ScalarValue: &fieldValue,
+		Path:        path,
 	}
+
+	// Every resource has a computed ID in the root resource
+	if path == "id" {
+		field.Computed = true
+	}
+
 	p.currentResource().Append(field)
 }

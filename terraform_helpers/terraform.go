@@ -55,10 +55,6 @@ func (s *InstanceState) ToSorted() *SortedInstanceState {
 	attributes := s.Attributes
 	attrKeys := make([]string, 0, len(attributes))
 	for ak, _ := range attributes {
-		if ak == "id" {
-			continue
-		}
-
 		attrKeys = append(attrKeys, ak)
 	}
 	sort.Strings(attrKeys)

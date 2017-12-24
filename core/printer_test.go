@@ -61,6 +61,142 @@ var _ = Describe("Printer", func() {
 		Expect(printer.Print(&resource)).To(Equal(ContentsOf("scalar_field.hcl")))
 	})
 
+	It("should skip computed fields", func() {
+		resource := Resource{
+			Name: "test",
+			Type: "simple_resource",
+			Fields: &InlineResource{
+				Fields: []*Field{
+					{
+						FieldType: SCALAR,
+						Key:       "scalar_field",
+						Computed:  true,
+						ScalarValue: &ScalarValue{
+							StringValue: "scalar_value",
+						},
+					},
+				},
+			},
+		}
+
+		printer := Printer{}
+
+		Expect(printer.Print(&resource)).To(Equal(ContentsOf("empty_resource.hcl")))
+	})
+
+	It("should render links to other resources", func() {
+		resource := Resource{
+			Name: "test",
+			Type: "simple_resource",
+			Fields: &InlineResource{
+				Fields: []*Field{
+					{
+						FieldType: SCALAR,
+						Key:       "scalar_field",
+						Link:      "aws_s3_bucket.name.id",
+						ScalarValue: &ScalarValue{
+							StringValue: "scalar_value",
+						},
+					},
+				},
+			},
+		}
+
+		printer := Printer{}
+
+		Expect(printer.Print(&resource)).To(Equal(ContentsOf("linked_resource.hcl")))
+	})
+
+	It("should render a truthy boolean value", func() {
+		resource := Resource{
+			Name: "test",
+			Type: "simple_resource",
+			Fields: &InlineResource{
+				Fields: []*Field{
+					{
+						FieldType: SCALAR,
+						Key:       "scalar_field",
+						ScalarValue: &ScalarValue{
+							StringValue: "true",
+							IsBool:      true,
+						},
+					},
+				},
+			},
+		}
+
+		printer := Printer{}
+
+		Expect(printer.Print(&resource)).To(Equal(ContentsOf("true_boolean_resource.hcl")))
+	})
+
+	It("should render a falsey boolean value", func() {
+		resource := Resource{
+			Name: "test",
+			Type: "simple_resource",
+			Fields: &InlineResource{
+				Fields: []*Field{
+					{
+						FieldType: SCALAR,
+						Key:       "scalar_field",
+						ScalarValue: &ScalarValue{
+							StringValue: "false",
+							IsBool:      true,
+						},
+					},
+				},
+			},
+		}
+
+		printer := Printer{}
+
+		Expect(printer.Print(&resource)).To(Equal(ContentsOf("false_boolean_resource.hcl")))
+	})
+
+	It("should render JSON as a multi-line value", func() {
+		resource := Resource{
+			Name: "test",
+			Type: "simple_resource",
+			Fields: &InlineResource{
+				Fields: []*Field{
+					{
+						FieldType: SCALAR,
+						Key:       "scalar_field",
+						ScalarValue: &ScalarValue{
+							StringValue: "{\"key\" : \"value\"}",
+						},
+					},
+				},
+			},
+		}
+
+		printer := Printer{}
+
+		Expect(printer.Print(&resource)).To(Equal(ContentsOf("json_resource.hcl")))
+	})
+
+	It("should not attempt to render invalid JSON as a multi-line value", func() {
+		resource := Resource{
+			Name: "test",
+			Type: "simple_resource",
+			Fields: &InlineResource{
+				Fields: []*Field{
+					{
+						FieldType: SCALAR,
+						Key:       "scalar_field",
+						ScalarValue: &ScalarValue{
+							StringValue: "{\"key\" : \"value\"",
+						},
+					},
+				},
+			},
+		}
+
+		printer := Printer{}
+
+		Expect(printer.Print(&resource)).To(Equal(ContentsOf("invalid_json_resource.hcl")))
+	})
+
 	It("should print a resource with a map field", func() {
 		resource := Resource{
 			Name: "test",
