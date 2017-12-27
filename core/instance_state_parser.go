@@ -12,7 +12,7 @@ import (
 
 // HERE BE DRAGONS
 // Do not read this code - it needs a complete rewrite to be a top down parser and to better differentiate
-//
+// between LISTS, SETS and MAPS.
 
 type ParentType int
 
