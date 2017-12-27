@@ -15,7 +15,8 @@ odd) design choices in order to preserve this compatibility.
 
 Formation is currently a proof of concept. The core logic is correct, but in need of some serious refactoring.
 
-Formation can import a limited subset of resources. See aws/importers.go for a list of resources that are supported.
+Formation can import a limited subset of resources. See [importers.go](https://github.com/jmcgill/formation/blob/master/aws/importers.go)
+  aws/importers.go for a list of resources that are supported.
 
 # Known Weirdness
 
@@ -35,9 +36,9 @@ Contributing is _super easy_. For each resource, we need to:
 1. Discover/List all resources of that type
 2. Extract the unique ID (as used by Terraform) and a human readable Name
 
-See aws/aws_s3_bucket.go for an example of how simple this is!
+See [aws_iam_role.go](https://github.com/jmcgill/formation/blob/master/aws/aws_iam_role.go) for an example of how simple this is!
 
-To contribute, pick any resource that doesn't yet have an imported in aws/importers.go and submit a Pull Request to
+To contribute, pick any resource that doesn't yet have an imported in [importers.go](https://github.com/jmcgill/formation/blob/master/aws/importers.go) and submit a Pull Request to
 implement it.
 
 # Design Document
