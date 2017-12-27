@@ -307,7 +307,7 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		Expect(printer.Print(parser.Parse(&state))).To(Equal(expected))
 	})
 
-	It("BUG2", func() {
+	It("BUG2: Multple tags", func() {
 		// S3 objects have deeply nested lists
 		state := terraform.InstanceState{
 			Attributes: map[string]string{
@@ -327,8 +327,8 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		        Stack-Id = "Stack-Id"
 		    }
 		    versioning {
-		        enabled = "false""
-		        mfe_delete = "false"
+		        enabled = "false"
+		        mfa_delete = "false"
 		    }
 		}`)
 

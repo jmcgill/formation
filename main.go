@@ -198,7 +198,7 @@ func IndexFields(resource *core.Resource, r *core.InlineResource, index FieldInd
 	}
 }
 
-func FindLink(index FieldIndex, value string, allowedPath string) (*core.Resource, bool) {
+func  FindLink(index FieldIndex, value string, allowedPath string) (*core.Resource, bool) {
 	fmt.Printf("Looking for link for value: %s\n", value)
 	if fields, ok := index[value]; ok {
 		fmt.Printf("Yup - that is in our reverse index!\n")
@@ -214,12 +214,12 @@ func FindLink(index FieldIndex, value string, allowedPath string) (*core.Resourc
 	return nil, false
 }
 
-func LinkFields(r *core.InlineResource, links map[string]string, index FieldIndex) *core.InlineResource {
-	RecursivelyLinkFields(r, links, index, "")
+func LinkFields(root* core.Resource, r *core.InlineResource, links map[string]string, index FieldIndex) *core.InlineResource {
+	RecursivelyLinkFields(root, r, links, index, "")
 	return r
 }
 
-func RecursivelyLinkFields(r *core.InlineResource, links map[string]string, index FieldIndex, path string) {
+func RecursivelyLinkFields(root* core.Resource, r *core.InlineResource, links map[string]string, index FieldIndex, path string) {
 	for _, f := range r.Fields {
 		// This is a scalar object
 		if f.FieldType == core.SCALAR {
@@ -236,10 +236,13 @@ func RecursivelyLinkFields(r *core.InlineResource, links map[string]string, inde
 			if allowedPath, ok := links[z]; ok {
 				fmt.Printf("Found rule: %s\n", allowedPath)
 				if resource, ok := FindLink(index, f.ScalarValue.StringValue, allowedPath); ok {
-					fmt.Printf("Found a valid link\n")
-					// Substitute in the resource name
-					resolvedPath := strings.Replace(allowedPath, resource.Type, resource.Type+"."+resource.Name, 1)
-					f.Link = resolvedPath
+					// Avoid self links
+					if resource.Name != root.Name {
+						fmt.Printf("Found a valid link\n")
+						// Substitute in the resource name
+						resolvedPath := strings.Replace(allowedPath, resource.Type, resource.Type+"."+resource.Name, 1)
+						f.Link = resolvedPath
+					}
 				}
 			}
 			continue
@@ -258,11 +261,11 @@ func RecursivelyLinkFields(r *core.InlineResource, links map[string]string, inde
 				z = f.Key
 			}
 
-			RecursivelyLinkFields(f.NestedValue, links, index, z)
+			RecursivelyLinkFields(root, f.NestedValue, links, index, z)
 		}
 
 		if f.FieldType == core.NESTED {
-			RecursivelyLinkFields(f.NestedValue, links, index, path)
+			RecursivelyLinkFields(root, f.NestedValue, links, index, path)
 		}
 	}
 }
@@ -408,7 +411,7 @@ func main() {
 
 		for i, importedResource := range resources {
 			resource := importedResource.resource
-			LinkFields(resource.Fields, importers[resource.Type].Links(), index)
+			LinkFields(resource, resource.Fields, importers[resource.Type].Links(), index)
 
 			// TODO(jimmy): Print to a file
 			printer := core.Printer{}

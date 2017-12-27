@@ -10,6 +10,10 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
+// HERE BE DRAGONS
+// Do not read this code - it needs a complete rewrite to be a top down parser and to better differentiate
+//
+
 type ParentType int
 
 const (
@@ -165,7 +169,7 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 			fmt.Printf("Remaining children: %i\n", p.state().remainingChildren)
 			p.state().remainingChildren -= 1
 			fmt.Printf("Remaining children: %i\n", p.state().remainingChildren)
-			if p.state().remainingChildren == 0 {
+			if p.state().remainingChildren <= 0 {
 				fmt.Printf("End of entries to parse\n")
 				// Pop an entry off the stack
 				_ = p.popState()
@@ -225,6 +229,11 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 
 	if !strings.ContainsRune(attribute, '.') {
 		fmt.Printf("Parsing a simple attribute\n")
+
+		if p.state().parentType == PARENT_MAP {
+			fmt.Printf("Decrementing map\n")
+			p.state().remainingChildren -= 1
+		}
 		p.parseSimpleAttribute(attribute, originalAttribute, value)
 	} else {
 		parts := strings.Split(attribute, ".")
