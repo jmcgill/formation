@@ -1,1 +1,4 @@
-.idea/
+*.tf
+.terraform
+*.tfstate
+main

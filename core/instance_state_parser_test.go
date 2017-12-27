@@ -1,7 +1,7 @@
 package core_test
 
 import (
-	. "formation/core"
+	. "github.com/jmcgill/formation/core"
 
 	"github.com/hashicorp/terraform/terraform"
 	. "github.com/onsi/ginkgo"
@@ -21,7 +21,7 @@ var _ = Describe("InstanceStateParser", func() {
 		}
 
 		parser := InstanceStateParser{}
-		Expect(*parser.Parse(&state)).To(Equal(expectedResource))
+		Expect((*parser.Parse(&state)).Fields).To(Equal(expectedResource))
 	})
 
 	It("should parse simple fields", func() {

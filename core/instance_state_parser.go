@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"formation/terraform_helpers"
+	"github.com/jmcgill/formation/terraform_helpers"
 	"strconv"
 	"strings"
 
@@ -54,7 +54,6 @@ func (p *InstanceStateParser) Parse(state *terraform.InstanceState) *Resource {
 	fmt.Printf("I HAVE BEGUN PARSING AND THE ID IS %s\n\n", state.Attributes["id"])
 
 	resource := &Resource{
-		State: state,
 	}
 
 	var wrappedState terraform_helpers.InstanceState

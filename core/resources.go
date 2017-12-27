@@ -1,7 +1,5 @@
 package core
 
-import "github.com/hashicorp/terraform/terraform"
-
 type FieldType int
 
 const (
@@ -40,6 +38,5 @@ type Field struct {
 type Resource struct {
 	Type   string
 	Name   string
-	State  *terraform.InstanceState
 	Fields *InlineResource
 }

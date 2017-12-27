@@ -2,7 +2,7 @@ package core_test
 
 import (
 	"fmt"
-	. "formation/core"
+	. "github.com/jmcgill/formation/core"
 	"strings"
 
 	"github.com/hashicorp/terraform/terraform"

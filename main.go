@@ -3,24 +3,26 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"formation/aws"
-	"formation/core"
+	"strconv"
+
+	"github.com/jmcgill/formation/aws"
+	"github.com/jmcgill/formation/core"
 	"os"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform/config/configschema"
+	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	aws2 "github.com/terraform-providers/terraform-provider-aws/aws"
 )
 
 // TODO(jimmy): Decide exactly where this belongs
-func RegisterImporters() map[string]core.Importer {
-	return map[string]core.Importer{
-		// "aws_s3_bucket": &aws.S3BucketImporter{},
-		"aws_iam_role": &aws.IAmRoleImporter{},
-	}
-}
+//func RegisterImporters() map[string]core.Importer {
+//	return map[string]core.Importer{
+//		"aws_s3_bucket": &aws.S3BucketImporter{},
+//		// "aws_iam_role": &aws.IAmRoleImporter{},
+//	}
+//}
 
 type UIInput struct {
 }
@@ -60,11 +62,9 @@ func MarkComputedFields(r *core.InlineResource, s *configschema.Block) *core.Inl
 }
 
 func ValueSet(r *core.InlineResource, key string) bool {
+	fmt.Printf("Looking for value set %s\n", key)
 	for _, f := range r.Fields {
-		if f.FieldType != core.SCALAR {
-			continue
-		}
-
+		fmt.Printf("Checking whether value is set - comparing %s to %s\n", f.Key, key)
 		if f.Key == key {
 			return true
 		}
@@ -72,67 +72,77 @@ func ValueSet(r *core.InlineResource, key string) bool {
 	return false
 }
 
-func DecorateWithDefaultFields(instanceState *terraform.InstanceState, r *core.InlineResource, description *core.ResourceDescription, parentKey string, searchPath string) *core.InlineResource {
-	// Are there any default fields at this level in the schema?
-	for path, v := range description.Defaults {
-		p := strings.Split(path, ".")
-		parentPath := strings.Join(p[:len(p)-1], ".")
-		childPath := p[len(p)-1]
-		fmt.Printf("Looking for default field '%s' : '%s' : '%s' : '%s'\n", path, parentPath, childPath, searchPath)
+func AppendToInstancePath(prefix string, suffix string) string {
+	if prefix == "" {
+		return suffix
+	}
+	return prefix + "." + suffix
+}
 
-		if parentPath == searchPath {
-			fmt.Printf("In the right parent path\n")
+func DecorateWithDefaultFields(instanceState *terraform.InstanceState, r *core.InlineResource, terraformSchema map[string]*schema.Schema, path string) *core.InlineResource {
+	// Are there any default fields at this level in the schema that are not set in our resource?
+	for key, v := range terraformSchema {
+		if v.Default == nil {
+			continue
 		}
 
-		if ValueSet(r, childPath) {
-			fmt.Printf("Value is set\n")
+		if ValueSet(r, key) {
+			continue
 		}
-		if parentPath == searchPath && !ValueSet(r, childPath) {
-			fmt.Printf("**##** No default value set for %s\n", childPath)
-			field := &core.Field{
-				FieldType: core.SCALAR,
-				Key:       childPath,
-				ScalarValue: &core.ScalarValue{
-					StringValue: v.Value,
-					IsBool:      v.IsBool,
-				},
-			}
-			r.Fields = append(r.Fields, field)
 
-			// Also update instance state
-			var stateKey string
-			if parentKey == "" {
-				stateKey = childPath
-			} else {
-				stateKey = parentKey + "." + childPath
-			}
-			instanceState.Attributes[stateKey] = v.Value
+		fmt.Printf("****** TRYING TO SET DEFAULT FIELD %s\n", key)
+
+		var defaultValue string
+
+		// TODO(jimmy): Switch to a TYPE enum - can pull this straight out of the schema object
+		isBool := false
+
+		switch v.Default.(type) {
+		case bool:
+			defaultValue = strconv.FormatBool(v.Default.(bool))
+			isBool = true
+		case string:
+			defaultValue = v.Default.(string)
 		}
+
+		instancePath := AppendToInstancePath(path, key)
+		instanceState.Attributes[instancePath] = defaultValue
+
+		field := &core.Field{
+			FieldType: core.SCALAR,
+			Path: instancePath,
+			Key:     key,
+			ScalarValue: &core.ScalarValue{
+				StringValue: defaultValue,
+				IsBool:      isBool,
+			},
+		}
+		r.Fields = append(r.Fields, field)
 	}
 
 	for _, f := range r.Fields {
-		// TODO(jimmy): Factor this more nicely, and possibly into a walker.
+		instancePath := AppendToInstancePath(path, f.Key)
+
+		// TODO(jimmy): Work out how default values should work for scalar lists
+		// HACK: Assume all resources are nested
 		if f.FieldType == core.LIST {
-			var z string
-			if searchPath != "" {
-				z = searchPath + "." + f.Key
-			} else {
-				z = f.Key
-			}
 			// Scalar lists will never have a default value, so we don't need to expand the parent key when
 			// recursing into a list. Instead we will rely on each nested object to do this.
-			DecorateWithDefaultFields(instanceState, f.NestedValue, description, f.Path, z)
+			fmt.Printf("Recursing into list\n")
+			DecorateWithDefaultFields(instanceState, f.NestedValue.Fields[0].NestedValue, terraformSchema[f.Key].Elem.(*schema.Resource).Schema, instancePath)
 		}
 
-		if f.FieldType == core.NESTED {
-			// TODO(jimmy): parentKey needs to be the path to the nested objecdt e.g. foo.1234 but I don't
-			// currently set this while parsing (bucause it would require lookahead). Fix this - perhaps by having
-			// the first child discovered fill it in.
-			//
-			// This depends on whether there is ever a list with a required-and-default set of keys that is not filled
-			// in by importing. I need to work through some more concrete examples first.
-			DecorateWithDefaultFields(instanceState, f.NestedValue, description, parentKey, searchPath)
-		}
+		//if f.FieldType == core.NESTED {
+		//	fmt.Printf("Recursing into nested resource - instance state is now %s\n", instanceState)
+		//	// TODO(jimmy): parentKey needs to be the path to the nested objecdt e.g. foo.1234 but I don't
+		//	// currently set this while parsing (bucause it would require lookahead). Fix this - perhaps by having
+		//	// the first child discovered fill it in.
+		//	//
+		//	// This depends on whether there is ever a list with a required-and-default set of keys that is not filled
+		//	// in by importing. I need to work through some more concrete examples first.
+		//	// TODO(jimmy): This is probably wrong?
+		//	DecorateWithDefaultFields(instanceState, f.NestedValue, terraformSchema, instancePath)
+		//}
 	}
 
 	return r
@@ -196,12 +206,12 @@ func FindLink(index FieldIndex, value string, allowedPath string) (*core.Resourc
 	return nil, false
 }
 
-func LinkFields(r *core.InlineResource, description *core.ResourceDescription, index FieldIndex) *core.InlineResource {
-	RecursivelyLinkFields(r, description, index, "")
+func LinkFields(r *core.InlineResource, links map[string]string, index FieldIndex) *core.InlineResource {
+	RecursivelyLinkFields(r, links, index, "")
 	return r
 }
 
-func RecursivelyLinkFields(r *core.InlineResource, description *core.ResourceDescription, index FieldIndex, path string) {
+func RecursivelyLinkFields(r *core.InlineResource, links map[string]string, index FieldIndex, path string) {
 	for _, f := range r.Fields {
 		// This is a scalar object
 		if f.FieldType == core.SCALAR {
@@ -213,8 +223,9 @@ func RecursivelyLinkFields(r *core.InlineResource, description *core.ResourceDes
 			}
 
 			fmt.Printf("Looking for a rule for %s\n", z)
+
 			// This field _can_ link to another resource
-			if allowedPath, ok := description.Links[z]; ok {
+			if allowedPath, ok := links[z]; ok {
 				fmt.Printf("Found rule: %s\n", allowedPath)
 				if resource, ok := FindLink(index, f.ScalarValue.StringValue, allowedPath); ok {
 					fmt.Printf("Found a valid link\n")
@@ -239,32 +250,65 @@ func RecursivelyLinkFields(r *core.InlineResource, description *core.ResourceDes
 				z = f.Key
 			}
 
-			RecursivelyLinkFields(f.NestedValue, description, index, z)
+			RecursivelyLinkFields(f.NestedValue, links, index, z)
 		}
 
 		if f.FieldType == core.NESTED {
-			RecursivelyLinkFields(f.NestedValue, description, index, path)
+			RecursivelyLinkFields(f.NestedValue, links, index, path)
 		}
 	}
+}
+
+type ImportedResource struct {
+	resource *core.Resource
+	state *terraform.InstanceState
 }
 
 func main() {
 	fmt.Println("Welcome to formation")
 
 	// TODO(jimmy): Bundle these into an object
-	allResources := make(map[string][]*core.Resource)
-	descriptions := make(map[string]*core.ResourceDescription)
+	allResources := make(map[string][]*ImportedResource)
 
 	// TODO(JIMMY): hide this away in a struct
 	index := make(FieldIndex)
 
-	importers := RegisterImporters()
+	importers := aws.Importers()
 
 	// Configure Terraform Plugin
 	provider := aws2.Provider()
+
+	// A duplicate Provider which is guaranteed to be configured in the same way as
+	// the AWS probvider above. This is needed so that we can access otherwisr private
+	// fields that are configured during initialization.
+	localProvider := aws.Provider()
 	c := terraform.NewResourceConfig(nil)
+	localProvider.Input(&UIInput{}, c)
+
+	err := localProvider.Configure(c)
+	if err != nil {
+		fmt.Printf("Error configuring internal provider")
+	}
+	localSchemaProvider := localProvider.(*schema.Provider)
+
+	// spew.Dump(x)
+
+	//v := reflect.ValueOf(provider)
+	//x := (v.FieldByName("Schema").Interface()).(map[string]*schema.Schema)
+	// fmt.Println(y.Interface())
+
+	//x := (*schema.Provider)(provider)
+	//x := (*schema.Provider)(unsafe.Pointer(&provider))
+	//for key, _ := range x {
+	//	fmt.Printf("%s\n", key)
+	//}
+	//spew.Dump((*x).Schema)
+
+	// Why doesn't this return the Schema I want?
+
+	c = terraform.NewResourceConfig(nil)
 	provider.Input(&UIInput{}, c)
-	err := provider.Configure(c)
+	err = provider.Configure(c)
 	if err != nil {
 		fmt.Printf("Error in configuration: %s", err)
 	}
@@ -273,12 +317,12 @@ func main() {
 	for resourceType, importer := range importers {
 		// TODO(jimmy): Initialize importer with our provider configuration so that
 		// we're guaranteed to be using the same AWS credentials.
-		description := importer.Describe()
+		instances, err := importer.Describe(localSchemaProvider.Meta())
+		if err != nil {
+			panic(err)
+		}
 
-		// TODO(jimmy): Have links returned from a separate call, not part of description
-		descriptions[resourceType] = &description
-
-		for _, instance := range description.Instances {
+		for _, instance := range instances {
 			instanceInfo := &terraform.InstanceInfo{
 				// Id is a unique name to represent this instance. This is not related
 				// to InstanceState.ID in any way.
@@ -296,15 +340,10 @@ func main() {
 			// TODO(jimmy): It's not always safe to assume that import returns a single reso	urce.
 			// If it returns multiple, do we need to refresh each one individually? I need a good
 			// case study here before guessing at the behaviour.
-			fmt.Printf("Trying to import instance state for %s\n", instance.ID)
 			instanceState, err := provider.Refresh(instanceInfo, instancesToImport[0])
 			if err != nil {
 				fmt.Printf("Error refreshing Instance State: %s", err)
-			}
-
-			fmt.Printf("*** GET UR ATTRIBUTES HERE **\n")
-			for k, v := range instanceState.Attributes {
-				fmt.Printf("\"%s\": \"%s\",\n", k, v)
+				panic("Error refreshing Instance State")
 			}
 
 			// Convert this resource from Terraform's internal format to a Formation Resource
@@ -324,8 +363,15 @@ func main() {
 			// Mark computed fields - we don't want to output these
 			MarkComputedFields(resource.Fields, s.ResourceTypes[resourceType])
 
+			// To get the resource schema we need to poke into the internal implementation of the AWS provider
+			schemaProvider := provider.(*schema.Provider)
+			DecorateWithDefaultFields(instanceState, resource.Fields, schemaProvider.ResourcesMap[resourceType].Schema, "")
+
 			// Store this resource for later
-			allResources[resourceType] = append(allResources[resourceType], resource)
+			allResources[resourceType] = append(allResources[resourceType], &ImportedResource{
+				resource: resource,
+				state: instanceState,
+			})
 
 			// Index this resource
 			IndexFields(resource, resource.Fields, index)
@@ -347,11 +393,9 @@ func main() {
 
 		fmt.Printf("Getting here too\n")
 
-		for i, resource := range resources {
-			fmt.Printf("Index of resource is %i\n", i)
-			LinkFields(resource.Fields, descriptions[resourceType], index)
-			DecorateWithDefaultFields(resource.State, resource.Fields, descriptions[resourceType], "", "")
-			spew.Dump(resource.Fields)
+		for i, importedResource := range resources {
+			resource := importedResource.resource
+			LinkFields(resource.Fields, importers[resource.Type].Links(), index)
 
 			// TODO(jimmy): Print to a file
 			printer := core.Printer{}
@@ -369,7 +413,7 @@ func main() {
 		Version: 3,
 
 		// TODO(jimmy): Pull this out of the terraform Context object
-		TFVersion: "0.11.2",
+		TFVersion: "0.11.1",
 
 		Serial: 1,
 
@@ -387,11 +431,11 @@ func main() {
 
 	state.Modules[0].Resources = make(map[string]*terraform.ResourceState)
 	for _, resources := range allResources {
-		for _, resource := range resources {
+		for _, importedResource := range resources {
+			resource := importedResource.resource
 			r := &terraform.ResourceState{
 				Type:    resource.Type,
-				Primary: resource.State,
-				// HACK
+				Primary: importedResource.state,
 				Provider: "provider.aws",
 			}
 			state.Modules[0].Resources[resource.Type+"."+resource.Name] = r

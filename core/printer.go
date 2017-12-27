@@ -118,6 +118,10 @@ func (p *Printer) printField(field *Field) {
 }
 
 func (p *Printer) printJSON(field *Field) bool {
+	if field.ScalarValue.StringValue == "" {
+		return false
+	}
+
 	if field.ScalarValue.StringValue[0] != '{' {
 		return false
 	}
@@ -130,7 +134,7 @@ func (p *Printer) printJSON(field *Field) bool {
 	}
 
 	s, _ := json.MarshalIndent(d, "", "    ")
-	p.write("%s = <<EOF\n%sEOF\n", field.Key, s)
+	p.write("%s = <<EOF\n%s\nEOF\n", field.Key, s)
 	return true
 }
 

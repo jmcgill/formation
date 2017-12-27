@@ -2,7 +2,7 @@ package core_test
 
 import (
 	"fmt"
-	. "formation/core"
+	. "github.com/jmcgill/formation/core"
 
 	"io/ioutil"
 	"path/filepath"
