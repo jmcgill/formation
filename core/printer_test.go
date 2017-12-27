@@ -39,6 +39,27 @@ var _ = Describe("Printer", func() {
 		Expect(printer.Print(&resource)).To(Equal(ContentsOf("empty_resource.hcl")))
 	})
 
+	It("should ommit empty fields", func() {
+		resource := Resource{
+			Name: "test",
+			Type: "simple_resource",
+			Fields: &InlineResource{
+				Fields: []*Field{
+					{
+						FieldType: SCALAR,
+						Key:       "scalar_field",
+						ScalarValue: &ScalarValue{
+							StringValue: "",
+						},
+					},
+				},
+			},
+		}
+		printer := Printer{}
+
+		Expect(printer.Print(&resource)).To(Equal(ContentsOf("empty_resource.hcl")))
+	})
+
 	It("should print a resource with a scalar field", func() {
 		resource := Resource{
 			Name: "test",

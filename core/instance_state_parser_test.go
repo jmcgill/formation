@@ -21,7 +21,7 @@ var _ = Describe("InstanceStateParser", func() {
 		}
 
 		parser := InstanceStateParser{}
-		Expect((*parser.Parse(&state)).Fields).To(Equal(expectedResource))
+		Expect((*parser.Parse(&state))).To(Equal(expectedResource))
 	})
 
 	It("should parse simple fields", func() {

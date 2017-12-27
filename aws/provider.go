@@ -461,7 +461,7 @@ func endpointsSchema() *schema.Schema {
 				"s3": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Default:     "",
+					Default:     "s3-us-west-2.amazonaws.com",
 					Description: descriptions["s3_endpoint"],
 				},
 				"sns": {

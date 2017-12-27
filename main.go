@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/jmcgill/formation/aws"
 	"github.com/jmcgill/formation/core"
 	"os"
@@ -49,8 +50,15 @@ func MarkComputedFields(r *core.InlineResource, s *configschema.Block) *core.Inl
 			continue
 		}
 
-		if f.FieldType == core.LIST {
+		if f.FieldType == core.LIST && f.NestedValue.Fields[0].FieldType == core.NESTED {
 			MarkComputedFields(f.NestedValue, &s.BlockTypes[f.Key].Block)
+		}
+
+		// Assume that lists of non-objects are never computed
+		// This is definitely wrong, but I need a case study to work out what this should look like
+		if f.FieldType == core.LIST && f.NestedValue.Fields[0].FieldType != core.NESTED {
+			continue
+			// MarkComputedFields(f.NestedValue, &s.Attributes[f.Key].Block)
 		}
 
 		if f.FieldType == core.NESTED {
@@ -125,7 +133,7 @@ func DecorateWithDefaultFields(instanceState *terraform.InstanceState, r *core.I
 
 		// TODO(jimmy): Work out how default values should work for scalar lists
 		// HACK: Assume all resources are nested
-		if f.FieldType == core.LIST {
+		if f.FieldType == core.LIST && f.NestedValue.Fields[0].FieldType == core.NESTED {
 			// Scalar lists will never have a default value, so we don't need to expand the parent key when
 			// recursing into a list. Instead we will rely on each nested object to do this.
 			fmt.Printf("Recursing into list\n")
@@ -335,6 +343,7 @@ func main() {
 			instancesToImport, err := provider.ImportState(instanceInfo, instance.ID)
 			if err != nil {
 				fmt.Printf("Error importing instances: %s", err)
+				continue
 			}
 
 			// TODO(jimmy): It's not always safe to assume that import returns a single reso	urce.
@@ -359,6 +368,10 @@ func main() {
 				ResourceTypes: []string{resourceType},
 			}
 			s, _ := provider.GetSchema(request)
+
+			spew.Dump(instanceState)
+			fmt.Printf("------\n")
+			spew.Dump(s.ResourceTypes[resourceType])
 
 			// Mark computed fields - we don't want to output these
 			MarkComputedFields(resource.Fields, s.ResourceTypes[resourceType])

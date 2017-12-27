@@ -105,11 +105,16 @@ func (p *Printer) printField(field *Field) {
 				p.write("%s = false\n", field.Key)
 			}
 		} else {
-			if !p.printJSON(field) {
-				p.write("%s = \"%s\"\n", field.Key, strings.Replace(field.ScalarValue.StringValue, "\"", "\\\"", -1))
+			if p.printJSON(field) {
+				return
 			}
-		}
 
+			if field.ScalarValue.StringValue == "" {
+				return
+			}
+
+			p.write("%s = \"%s\"\n", field.Key, strings.Replace(field.ScalarValue.StringValue, "\"", "\\\"", -1))
+		}
 	} else if field.FieldType == MAP {
 		p.printMap(field.Key, field.NestedValue)
 	} else if field.FieldType == LIST {

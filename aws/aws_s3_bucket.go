@@ -2,8 +2,6 @@ package aws
 
 import (
 	"github.com/jmcgill/formation/core"
-	"strings"
-
 	"github.com/aws/aws-sdk-go/aws"
 )
 
@@ -21,7 +19,7 @@ func (*AwsS3BucketImporter) Describe(meta interface{}) ([]*core.Instance, error)
 	r := make([]*core.Instance, len(result.Buckets))
 	for i, b := range result.Buckets {
 		r[i] = &core.Instance{
-			Name: strings.Replace(aws.StringValue(b.Name), "-", "_", -1),
+			Name: core.Format(aws.StringValue(b.Name)),
 			ID:   aws.StringValue(b.Name),
 		}
 	}

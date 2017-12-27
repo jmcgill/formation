@@ -29,7 +29,7 @@ func (*AwsIamRoleImporter) Describe(meta interface{}) ([]*core.Instance, error) 
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
 		instances[i] = &core.Instance{
-			Name: aws.StringValue(existingInstance.RoleName),
+			Name: core.Format(aws.StringValue(existingInstance.RoleName)),
 			ID:   aws.StringValue(existingInstance.RoleName),
 		}
 	}

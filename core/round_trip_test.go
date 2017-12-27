@@ -153,11 +153,8 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		        name = "s3-website-us-west-2.amazonaws.com"
 		        zone_id = "Z3BJ6K6RIION7M"
 		    }
-		    failover = ""
 		    fqdn = "mikeball.me"
-		    health_check_id = ""
 		    name = "mikeball.me"
-		    set_identifier = ""
 		    ttl = "0"
 		    type = "A"
 		    weight = "-1"
@@ -229,7 +226,6 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 
 		expected := cleanMultiline(`
 		resource "" "" {
-		    acceleration_status = ""
 		    arn = "arn:aws:s3:::formation-test-bucket"
 		    bucket = "formation-test-bucket"
 		    bucket_domain_name = "formation-test-bucket.s3.amazonaws.com"
@@ -240,7 +236,6 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		        item = "One"
 		        rule {
 		            apply_server_side_encryption_by_default {
-		                kms_master_key_id = ""
 		                sse_algorithm = "AES256"
 		            }
 		        }
@@ -290,7 +285,6 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 
 		expected := cleanMultiline(`
 		resource "" "" {
-		    acceleration_status = ""
 		    arn = "arn:aws:s3:::formation-test-bucket-two"
 		    bucket = "formation-test-bucket-two"
 		    bucket_domain_name = "formation-test-bucket-two.s3.amazonaws.com"
@@ -310,7 +304,39 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		parser := InstanceStateParser{}
 		printer := Printer{}
 
-		fmt.Println(printer.Print(parser.Parse(&state)))
 		Expect(printer.Print(parser.Parse(&state))).To(Equal(expected))
+	})
+
+	It("BUG2", func() {
+		// S3 objects have deeply nested lists
+		state := terraform.InstanceState{
+			Attributes: map[string]string{
+				"tags.%": "2",
+				"tags.Environment": "prod",
+				"tags.Stack-Id": "Stack-Id",
+				"versioning.#": "1",
+				"versioning.0.enabled": "false",
+				"versioning.0.mfa_delete": "false",
+			},
+		}
+
+		expected := cleanMultiline(`
+		resource "" "" {
+		    tags {
+		        Environment = "prod"
+		        Stack-Id = "Stack-Id"
+		    }
+		    versioning {
+		        enabled = "false""
+		        mfe_delete = "false"
+		    }
+		}`)
+
+		parser := InstanceStateParser{}
+		printer := Printer{}
+
+		x := printer.Print(parser.Parse(&state))
+		fmt.Println(x)
+		Expect(x).To(Equal(expected))
 	})
 })
