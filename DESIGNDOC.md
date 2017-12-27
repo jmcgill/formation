@@ -3,13 +3,13 @@
 
 Terraform is an increasingly popular and robust way to manage infrastructure as code, allowing for changes to infrastructure to be version controlled and peer reviewed.
 
-While it makes sense for new projects to use Terraform, importing existing AWS infrastructure currently requires manually writing out the
+While it makes sense for new projects to use Terraform, importing existing AWS infrastructure currently requires manually writing out a definition for each resource that already exists, and then manually running the `terraform import` command to import that resource.
 
-Formation is designed to make importing resources from any cloud into Terraform simple. By building on top of the existing Terraform providers, Formation is able to guarantee that it can import all properties supported by Terraform, and can serialize tfstate files with guaranteed compatibility.
+Formation is designed to make importing resources from any cloud into Terraform simple. By building on top of the existing Terraform providers, Formation is able to guarantee that it can import all properties supported by Terraform, and can serialize compatible tfstate files.
 
 ## Related Projects
 
-Terraforming (https://github.com/dtan4/terraforming) is a Ruby CLI which uses the AWS Ruby Library to read the details of assets stored in AWS and populate template files
+Terraforming (https://github.com/dtan4/terraforming) is a Ruby CLI which uses the AWS Ruby Library to read the details of assets stored in AWS and populate template files.
 
 It supports a small subset of AWS resources, and is missing many properties from basic objects (e.g. tags or cors_headers for S3 buckets). Adding these properties requires effectively replicating much of the work that has already gone into reading AWS resources in Terraform.
 
@@ -153,6 +153,7 @@ Resources will be represented using the following structs
       Name string
       Fields []Field
     }
+
 ## Resource Discovery
 
 In order to Import a resource, we must first know its identifier. Discovering these identifiers is different for each resource type, and will be the most significant piece of functionality.
@@ -185,6 +186,7 @@ In order to construct the correct set of links, we will perform two steps:
 
 
 2. We will semantically declare the set of valid links between resource types. There is unfortunately no better way to do this than reading through the Terraform documentation.
+
 ## Indexing
 
 Given an opaque identifier in a resource, we want to understand what other resources that identifier might be linking to. We will therefore create an index that allows O(1) lookup of potential resources by identifier, assuming we know the instance type and field name that we expect to link to (more on this later).
@@ -206,12 +208,14 @@ Will produce the following index:
 
 ## Resolving Links
 
-In order to determine how to link resources, we need to declare the types of links that can exist between resources. This will be declared as part of the `ResourceParser`  struct in a struct returned by the `GetLinks` method.
+In order to determine how to link resources, we need to declare the types of links that can exist between resources.
 
-This struct will conform to the following interface, which is designed to one day be easily mergeable with the `schema.Schema` struct in Terraform.
+This information is encoded as a map between paths to fields in the current resource, and the fields in related resources which they can link to. For example, for an S3
+logs field (which can reference another S3 bucket by that bucket's unique ID):
 
-`// TODO(jimmy): Linking inside policies`
+    "logging.target_bucket" : "aws_s3_bucket.id",
 
+In the future, this information could be automatically converted toconform to the following interface, which could be merged with the `schema.Schema` struct in Terraform.
 
     type ValueType int
 
@@ -264,172 +268,57 @@ This struct will conform to the following interface, which is designed to one da
       }
     }
 
-
-To resolve a link, we will walk the `LinkSchema` to find the definition of the current field, and then construct a key from `Link.Type` + `Link.Field` + the current value in the imported resource to look up
-
-It is possible for there to be more than one valid link for a given field type - in this case the declaration will contain multiple `Link` definitions, and the first matching definition will prevail.
+Today, links cannot be programatically extracted. Instead, they must be determined by reading the Terraform documentation.
 
 
-## Storing Links
+# Example Resource Importer
 
-For now, the resolved link will simply be stored as a Terraform link string with the format `${resource_type.resource_name.resource_field`.
+The following is an example of a resource importer for an IAM Role. It uses AWS Pagination to ensure that all roles
+are imported.
 
-
-# Example Resource Imported
-
-The following is an example of an S3 resource importer
-
+    package aws
 
     import (
-        "fmt"
+        "github.com/jmcgill/formation/core"
         "github.com/aws/aws-sdk-go/aws"
-        "github.com/aws/aws-sdk-go/aws/session"
-        "github.com/aws/aws-sdk-go/service/s3"
+        "github.com/aws/aws-sdk-go/service/iam"
     )
 
-    type S3Importer struct {
+    type AwsIamRoleImporter struct {
     }
 
-    func (i *S3Importer) PopulateInstanceStates() []ImportedResource {
-      var r []ImportedResource
+    // Lists all resources of this type
+    func (*AwsIamRoleImporter) Describe(meta interface{}) ([]*core.Instance, error) {
+        svc :=  meta.(*AWSClient).iamconn
 
-      // TODO(jimmy): How best to pass in configuration?
-      svc := s3.New(session.New(), &aws.Config{Region: aws.String("us-west-2")})
-
-      // Example sending a request using the ListBucketsRequest method.
-      req, resp := client.ListBucketsRequest()
-      err := req.Send()
-      if err {
-        fmt.Println("Error listing buckets")
-      }
-
-      for _, bucket := range resp.Buckets {
-        state := InstanceState{}
-        state.Id = bucket.Name
-
-        // Force policies to be inlined if they exist
-        state.Attributes["policy"] = ""
-
-        instance := ImportedResource {
-          Name: bucket.Name,
-          InstanceState: &state
-        }
-        r = append(r, instance)
-      }
-
-      return instance
-    }
-
-    func (i *S3Importer) GetLinks() map[string]*LinkSchema {
-      return map[string]*LinkSchema{
-       "logging": {
-         Type:     schema.TypeList,
-         Elem: &LinkResource{
-            Schema: map[string]*LinkSchema{
-               "target_bucket": {
-                  Type:     schema.TypeLink,
-                  Links: [
-                     Type: "aws_s3_bucket",
-                     Field: "id"
-                  ]
-               }
+        // Enumerate all existing IAM Roles
+        existingInstances := make([]*iam.Role, 0)
+        err := svc.ListRolesPages(nil, func(o *iam.ListRolesOutput, lastPage bool) bool {
+            for _, i := range o.Roles {
+                existingInstances = append(existingInstances, i)
             }
-         }
-      },
-       "replication_configuration": {
-         Type:     schema.TypeList,
-         Elem: &LinkResource{
-            Schema: map[string]*LinkSchema{
-               "role": {
-                  Type:     schema.TypeLink,
-                  Links: [
-                     Type: "aws_iam_role",
-                     Field: "arn"
-                  ]
-               },
+            return true // continue paging
+        })
 
-               "rules": {
-                  Type:   schema.List,
-                  Elem: &LinkResource {
-                    Schema: map[string]*LinkSchema {
-                      "destination": {
-                        Type: schema.List,
-                        Elem: &LinkResouce{
-                          Schema: map[string]*LinkSchema {
-                            "bucket": {
-                              Type:   schema.Link,
-                              Links: [
-                                Type: "aws_s3_bucket",
-                                Field: "arn"
-                              ]
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-               }
-            }
-         }
-      }
-    }
-
-Alternate representation:
-
-
-    "logging[].target_bucket" => "aws_s3_bucket.id"
-    "replication_configuration[].role" => "aws_s3_bucket.arn"
-    "replication_configuration[].rules[].destination[].bucket" = "aws_s3_bucket.arn"
-
-
-# Random Thoughts (Stop Reading Here)
-
-It *should* be possible, but harder, to replace links in policies too.  If we do this we probably want to clearly label that this is a policy expansion, not a resource expansion.
-
-
-    resource "aws_iam_policy" "replication" {
-      name = "tf-iam-role-policy-replication-12345"
-
-      policy = <<POLICY
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Action": [
-            "s3:GetReplicationConfiguration",
-            "s3:ListBucket"
-          ],
-          "Effect": "Allow",
-          "Resource": [
-            "${aws_s3_bucket.bucket.arn}"
-          ]
-        },
-        {
-          "Action": [
-            "s3:GetObjectVersion",
-            "s3:GetObjectVersionAcl"
-          ],
-          "Effect": "Allow",
-          "Resource": [
-            "${aws_s3_bucket.bucket.arn}/*"
-          ]
-        },
-        {
-          "Action": [
-            "s3:ReplicateObject",
-            "s3:ReplicateDelete"
-          ],
-          "Effect": "Allow",
-          "Resource": "${aws_s3_bucket.destination.arn}/*"
+        if err != nil {
+            return nil, err
         }
-      ]
+
+        // Map to a Unique ID and a human readable name. The Unique ID must be the same one that is used by
+        // the terraform import command.
+        instances := make([]*core.Instance, len(existingInstances))
+        for i, existingInstance := range existingInstances {
+            instances[i] = &core.Instance{
+                Name: core.Format(aws.StringValue(existingInstance.RoleName)),
+                ID:   aws.StringValue(existingInstance.RoleName),
+            }
+        }
+
+        return instances, nil
     }
-    POLICY
+
+    // Describes which other resources this resource can reference
+    func (*AwsIamRoleImporter) Links() map[string]string {
+        return map[string]string{
+        }
     }
-
-
-    // No trailing value after array means replace each elements
-    // Need some method of handling the /*
-    // Need to split by path and handle each element in the path individually
-    "policy.statement[].Resource[]" => "{s3_bucket.arn}/*"
-
