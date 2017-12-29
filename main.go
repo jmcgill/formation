@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"flag"
+	"io/ioutil"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/jmcgill/formation/aws"
@@ -16,14 +18,6 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 	aws2 "github.com/terraform-providers/terraform-provider-aws/aws"
 )
-
-// TODO(jimmy): Decide exactly where this belongs
-//func RegisterImporters() map[string]core.Importer {
-//	return map[string]core.Importer{
-//		"aws_s3_bucket": &aws.S3BucketImporter{},
-//		// "aws_iam_role": &aws.IAmRoleImporter{},
-//	}
-//}
 
 type UIInput struct {
 }
@@ -114,6 +108,8 @@ func DecorateWithDefaultFields(instanceState *terraform.InstanceState, r *core.I
 		}
 
 		instancePath := AppendToInstancePath(path, key)
+
+		fmt.Printf("***** DEFAULT VALUE PATH IS%s\n", instancePath)
 		instanceState.Attributes[instancePath] = defaultValue
 
 		field := &core.Field{
@@ -277,6 +273,9 @@ type ImportedResource struct {
 
 func main() {
 	fmt.Println("Welcome to formation")
+	tfstate := flag.String("tfstate", "", "Path to an existing tfstate file to merge")
+	resourceToImport := flag.String("resource", "", "A specific resource type to import")
+	flag.Parse()
 
 	// TODO(jimmy): Bundle these into an object
 	allResources := make(map[string][]*ImportedResource)
@@ -285,6 +284,42 @@ func main() {
 	index := make(FieldIndex)
 
 	importers := aws.Importers()
+
+	// Restrict to a specific resource type, if requested
+	if *resourceToImport != "" {
+		importers = map[string]core.Importer{
+			*resourceToImport: importers[*resourceToImport],
+		}
+		fmt.Printf("Importing for resource....\n")
+		spew.Dump(importers)
+	}
+
+	//// TODO(jimmy): Move this into a cached results interface
+	//if *tfstate != "" {
+	//	cachedState := terraform.State{}
+	//	contents, err := ioutil.ReadFile(*tfstate)
+	//	if err != nil {
+	//		panic("Error reading existing TFState file")
+	//	}
+	//
+	//	err = json.Unmarshal(contents, &cachedState);
+	//	if err != nil {
+	//		panic("Error unmarshaling JSON")
+	//	}
+	//
+	//	for instancePath, instance {
+	//
+	//	}
+	//	// Clear any resources being imported, in case we've changed the way
+	//	// their key is constructed
+	//	if *resourceToImport != "" {
+	//		for key, _ := range state.Modules[0].Resources {
+	//			if strings.HasPrefix(key, *resourceToImport) {
+	//				delete(state.Modules[0].Resources, key)
+	//			}
+	//		}
+	//	}
+	//}
 
 	// Configure Terraform Plugin
 	provider := aws2.Provider()
@@ -302,21 +337,6 @@ func main() {
 	}
 	localSchemaProvider := localProvider.(*schema.Provider)
 
-	// spew.Dump(x)
-
-	//v := reflect.ValueOf(provider)
-	//x := (v.FieldByName("Schema").Interface()).(map[string]*schema.Schema)
-	// fmt.Println(y.Interface())
-
-	//x := (*schema.Provider)(provider)
-	//x := (*schema.Provider)(unsafe.Pointer(&provider))
-	//for key, _ := range x {
-	//	fmt.Printf("%s\n", key)
-	//}
-	//spew.Dump((*x).Schema)
-
-	// Why doesn't this return the Schema I want?
-
 	c = terraform.NewResourceConfig(nil)
 	provider.Input(&UIInput{}, c)
 	err = provider.Configure(c)
@@ -324,10 +344,10 @@ func main() {
 		fmt.Printf("Error in configuration: %s", err)
 	}
 
+	fmt.Printf("Configuration complete\n")
+
 	// For each importer
 	for resourceType, importer := range importers {
-		// TODO(jimmy): Initialize importer with our provider configuration so that
-		// we're guaranteed to be using the same AWS credentials.
 		instances, err := importer.Describe(localSchemaProvider.Meta())
 		if err != nil {
 			panic(err)
@@ -349,13 +369,29 @@ func main() {
 				continue
 			}
 
-			// TODO(jimmy): It's not always safe to assume that import returns a single reso	urce.
-			// If it returns multiple, do we need to refresh each one individually? I need a good
+			// TODO(jimmy): EC2: Add an Import function for when things don't quite go right. Could source UserData there.
+			instancesToImport[0].Attributes["user_data_base64"] = "sentinal"
+
+			// TODO(jimmy): It's not always safe to assume that import returns a single resource.
+			// If it returns multiple, do we need to refresh eac
+			// h one individually? I need a good
 			// case study here before guessing at the behaviour.
 			instanceState, err := provider.Refresh(instanceInfo, instancesToImport[0])
 			if err != nil {
 				fmt.Printf("Error refreshing Instance State: %s", err)
 				panic("Error refreshing Instance State")
+			}
+
+			// EC2: Clear our sentinal if not used
+			if instanceState.Attributes["user_data_base64"] == "sentinal" {
+				delete(instanceState.Attributes, "user_data_base64")
+			}
+
+			// EC2: Clear EBS volumes
+			for key, _ := range instanceState.Attributes {
+				if strings.HasPrefix(key, "ebs_block_device") {
+					delete(instanceState.Attributes, key)
+				}
 			}
 
 			// Convert this resource from Terraform's internal format to a Formation Resource
@@ -371,10 +407,6 @@ func main() {
 				ResourceTypes: []string{resourceType},
 			}
 			s, _ := provider.GetSchema(request)
-
-			spew.Dump(instanceState)
-			fmt.Printf("------\n")
-			spew.Dump(s.ResourceTypes[resourceType])
 
 			// Mark computed fields - we don't want to output these
 			MarkComputedFields(resource.Fields, s.ResourceTypes[resourceType])
@@ -394,11 +426,8 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Finished importing and indexing fields\n")
-
 	// At this point, all resources have been index
 	for resourceType, resources := range allResources {
-		fmt.Printf("Resource type is: %s, %i\n", resourceType, len(resources))
 		f, err := os.Create(resourceType + ".tf")
 		defer f.Close()
 
@@ -407,13 +436,10 @@ func main() {
 			return
 		}
 
-		fmt.Printf("Getting here too\n")
-
 		for i, importedResource := range resources {
 			resource := importedResource.resource
 			LinkFields(resource, resource.Fields, importers[resource.Type].Links(), index)
 
-			// TODO(jimmy): Print to a file
 			printer := core.Printer{}
 			printer.PrintToFile(f, resource)
 
@@ -444,8 +470,32 @@ func main() {
 			},
 		},
 	}
-
 	state.Modules[0].Resources = make(map[string]*terraform.ResourceState)
+
+	if *tfstate != "" {
+		contents, err := ioutil.ReadFile(*tfstate)
+		if err != nil {
+			panic("Error reading existing TFState file")
+		}
+
+		err = json.Unmarshal(contents, &state);
+		if err != nil {
+			panic("Error unmarshaling JSON")
+		}
+
+		fmt.Printf("Unmarshaled JSON")
+
+		// Clear any resources being imported, in case we've changed the way
+		// their key is constructed
+		if *resourceToImport != "" {
+			for key, _ := range state.Modules[0].Resources {
+				if strings.HasPrefix(key, *resourceToImport) {
+					delete(state.Modules[0].Resources, key)
+				}
+			}
+		}
+	}
+
 	for _, resources := range allResources {
 		for _, importedResource := range resources {
 			resource := importedResource.resource
@@ -466,5 +516,4 @@ func main() {
 
 	j, _ := json.MarshalIndent(state, "", "    ")
 	f.Write(j)
-	fmt.Printf("Def getting here...\n")
 }

@@ -339,4 +339,30 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		fmt.Println(x)
 		Expect(x).To(Equal(expected))
 	})
+
+	It("BUG3: Tags can be dot-delimited", func() {
+		// S3 objects have deeply nested lists
+		state := terraform.InstanceState{
+			Attributes: map[string]string{
+				"tags.%": "2",
+				"tags.Environment": "prod",
+				"tags.I.Have.Dots": "Hello",
+			},
+		}
+
+		expected := cleanMultiline(`
+		resource "" "" {
+		    tags {
+		        Environment = "prod"
+		        I.Have.Dots = "Hello"
+		    }
+		}`)
+
+		parser := InstanceStateParser{}
+		printer := Printer{}
+
+		x := printer.Print(parser.Parse(&state))
+		fmt.Println(x)
+		Expect(x).To(Equal(expected))
+	})
 })

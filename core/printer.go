@@ -113,7 +113,14 @@ func (p *Printer) printField(field *Field) {
 				return
 			}
 
-			p.write("%s = \"%s\"\n", field.Key, strings.Replace(field.ScalarValue.StringValue, "\"", "\\\"", -1))
+			// TODO(jimmy): Make this anything except valid key characters
+			if strings.Contains(field.Key, "/") {
+				p.write("\"%s\" = \"%s\"\n", field.Key, strings.Replace(field.ScalarValue.StringValue, "\"", "\\\"", -1))
+			} else {
+				p.write("%s = \"%s\"\n", field.Key, strings.Replace(field.ScalarValue.StringValue, "\"", "\\\"", -1))
+			}
+
+
 		}
 	} else if field.FieldType == MAP {
 		p.printMap(field.Key, field.NestedValue)

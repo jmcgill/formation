@@ -227,7 +227,7 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 	fmt.Printf("The current prefix is: %s\n", p.state().prefix)
 	fmt.Printf("Looking for dot rune in attribute %s\n", attribute)
 
-	if !strings.ContainsRune(attribute, '.') {
+	if !strings.ContainsRune(attribute, '.') || p.state().parentType == PARENT_MAP {
 		fmt.Printf("Parsing a simple attribute\n")
 
 		if p.state().parentType == PARENT_MAP {
