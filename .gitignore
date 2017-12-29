@@ -3,3 +3,4 @@
 .terraform
 *.tfstate
 main
+finalized/
