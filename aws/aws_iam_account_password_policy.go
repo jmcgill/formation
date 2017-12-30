@@ -2,7 +2,6 @@ package aws
 
 import (
 	"github.com/jmcgill/formation/core"
-	//"github.com/aws/aws-sdk-go/aws"
 )
 
 type AwsIamAccountPasswordPolicyImporter struct {
@@ -10,25 +9,16 @@ type AwsIamAccountPasswordPolicyImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamAccountPasswordPolicyImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	return nil, nil
-	//svc :=  meta.(*AWSClient).iamconn
+    // You can only have a single password policy per account, and it is always known to Terraform as
+    // iam-account-password-policy
+	instance :=  &core.Instance{
+		Name: "policy",
+		ID:   "iam-account-password-policy",
+	}
 
-	// Add code to list resources here
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//  return nil, err
-	//}
-
-    //existingInstances := ... // e.g. result.Buckets
-	//instances := make([]*core.Instance, len(existingInstances))
-	//for i, existingInstance := range existingInstances {
-	//	instances[i] = &core.Instance{
-	//		Name: strings.Replace(aws.StringValue(existingInstance.Name), "-", "_", -1),
-	//		ID:   aws.StringValue(existingInstance.Name),
-	//	}
-	//}
-
-	// return instances, nil
+	return []*core.Instance{
+		instance,
+	}, nil
 }
 
 // Describes which other resources this resource can reference

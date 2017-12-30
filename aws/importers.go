@@ -130,7 +130,7 @@ func Importers() map[string]core.Importer {
         // IAM Resources
         // "aws_iam_access_key": Secret - cannot be imported,
         "aws_iam_account_alias": &AwsIamAccountAliasImporter{},
-        // "aws_iam_account_password_policy": &AwsIamAccountPasswordPolicyImporter{},
+        "aws_iam_account_password_policy": &AwsIamAccountPasswordPolicyImporter{},
         // "aws_iam_group": &AwsIamGroupImporter{},
         // "aws_iam_group_membership": &AwsIamGroupMembershipImporter{},
         // "aws_iam_group_policy": &AwsIamGroupPolicyImporter{},
