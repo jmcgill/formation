@@ -3,8 +3,11 @@ package core
 import "github.com/hashicorp/terraform/terraform"
 
 type Instance struct {
-	ID   string
 	Name string
+
+	// One of ID or CompositeID must be set
+	ID   string
+	CompositeID map[string]string
 }
 
 type Importer interface {
@@ -17,6 +20,6 @@ type Importer interface {
 type PatchyImporter interface {
 	Describe(meta interface{}) ([]*Instance, error)
 	Links() map[string]string
-	Import(*terraform.InstanceInfo, interface{}) ([]*terraform.InstanceState, bool, error)
-	Clean(*terraform.InstanceState, interface{}) (*terraform.InstanceState)
+	Import(in *Instance, meta interface{}) ([]*terraform.InstanceState, bool, error)
+	Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState)
 }

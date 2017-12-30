@@ -4,6 +4,7 @@ import (
 	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/hashicorp/terraform/terraform"
 	"fmt"
 )
 
@@ -61,11 +62,30 @@ func (*AwsEcsServiceImporter) Describe(meta interface{}) ([]*core.Instance, erro
 	for i, existingInstance := range existingInstances {
 		instances[i] = &core.Instance{
 			Name: core.Format(aws.StringValue(existingInstance.ServiceName)),
-			ID:   aws.StringValue(existingInstance.ClusterArn) + "@" + aws.StringValue(existingInstance.ServiceArn),
+			CompositeID: map[string]string{
+				"cluster_arn": aws.StringValue(existingInstance.ClusterArn),
+				"service_arn": aws.StringValue(existingInstance.ServiceArn),
+			},
 		}
 	}
 
 	return instances, nil
+}
+
+func (*AwsEcsServiceImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
+	state := &terraform.InstanceState{
+		ID: in.CompositeID["service_arn"],
+		Attributes: map[string]string {
+			"cluster": in.CompositeID["cluster_arn"],
+		},
+	}
+	return []*terraform.InstanceState{
+		state,
+	}, false, nil
+}
+
+func (*AwsEcsServiceImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+	return in
 }
 
 // Describes which other resources this resource can reference

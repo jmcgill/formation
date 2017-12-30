@@ -354,6 +354,10 @@ func main() {
 		}
 
 		for _, instance := range instances {
+			var instancesToImport []*terraform.InstanceState
+			importViaTerraform := true
+
+			spew.Dump(instance)
 			instanceInfo := &terraform.InstanceInfo{
 				// Id is a unique name to represent this instance. This is not related
 				// to InstanceState.ID in any way.
@@ -363,14 +367,20 @@ func main() {
 				Type: resourceType,
 			}
 
-			instancesToImport, err := provider.ImportState(instanceInfo, instance.ID)
-			if err != nil {
-				fmt.Printf("Error importing instances: %s", err)
-				continue
+			if patchyImporter, ok := importer.(core.PatchyImporter); ok {
+				instancesToImport, importViaTerraform, err = patchyImporter.Import(instance, localSchemaProvider.Meta())
+			}
+
+			if importViaTerraform {
+				instancesToImport, err = provider.ImportState(instanceInfo, instance.ID)
+				if err != nil {
+					fmt.Printf("Error importing instances: %s", err)
+					continue
+				}
 			}
 
 			// TODO(jimmy): EC2: Add an Import function for when things don't quite go right. Could source UserData there.
-			instancesToImport[0].Attributes["user_data_base64"] = "sentinal"
+			//instancesToImport[0].Attributes["user_data_base64"] = "sentinal"
 
 			// TODO(jimmy): It's not always safe to assume that import returns a single resource.
 			// If it returns multiple, do we need to refresh eac
@@ -382,17 +392,21 @@ func main() {
 				panic("Error refreshing Instance State")
 			}
 
-			// EC2: Clear our sentinal if not used
-			if instanceState.Attributes["user_data_base64"] == "sentinal" {
-				delete(instanceState.Attributes, "user_data_base64")
+			if patchyImporter, ok := importer.(core.PatchyImporter); ok {
+				instanceState = patchyImporter.Clean(instanceState, localSchemaProvider.Meta())
 			}
 
+			// EC2: Clear our sentinal if not used
+			//if instanceState.Attributes["user_data_base64"] == "sentinal" {
+			//	delete(instanceState.Attributes, "user_data_base64")
+			//}
+
 			// EC2: Clear EBS volumes
-			for key, _ := range instanceState.Attributes {
-				if strings.HasPrefix(key, "ebs_block_device") {
-					delete(instanceState.Attributes, key)
-				}
-			}
+			//for key, _ := range instanceState.Attributes {
+			//	if strings.HasPrefix(key, "ebs_block_device") {
+			//		delete(instanceState.Attributes, key)
+			//	}
+			//}
 
 			// Convert this resource from Terraform's internal format to a Formation Resource
 			parser := core.InstanceStateParser{}

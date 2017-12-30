@@ -4,6 +4,8 @@ import (
 	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/hashicorp/terraform/terraform"
+	"strings"
 )
 
 type AwsInstanceImporter struct {
@@ -54,6 +56,46 @@ func (*AwsInstanceImporter) Describe(meta interface{}) ([]*core.Instance, error)
 	}
 
 	return instances, nil
+}
+
+func (*AwsInstanceImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
+	svc :=  meta.(*AWSClient).ec2conn
+
+	attributeUserData := "userData"
+
+	input := &ec2.DescribeInstanceAttributeInput{
+		InstanceId: &in.ID,
+		Attribute: &attributeUserData,
+	}
+
+	output, err := svc.DescribeInstanceAttribute(input)
+	if err != nil {
+		return nil, false, err
+	}
+
+	state := &terraform.InstanceState{
+		ID: in.ID,
+		Attributes: map[string]string {
+		},
+	}
+
+	if output.UserData != nil && output.UserData.Value != nil {
+		// Set a sentinal value so that the importer reads this value correctly
+		state.Attributes["user_data_base64"] = aws.StringValue(output.UserData.Value)
+	}
+
+	return []*terraform.InstanceState{
+		state,
+	}, false, nil
+}
+
+func (*AwsInstanceImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+	for key, _ := range in.Attributes {
+		if strings.HasPrefix(key, "ebs_block_device") {
+			delete(in.Attributes, key)
+		}
+	}
+	return in
 }
 
 // Describes which other resources this resource can reference
