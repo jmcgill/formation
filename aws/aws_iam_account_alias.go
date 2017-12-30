@@ -2,7 +2,7 @@ package aws
 
 import (
 	"github.com/jmcgill/formation/core"
-	//"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws"
 )
 
 type AwsIamAccountAliasImporter struct {
@@ -10,25 +10,23 @@ type AwsIamAccountAliasImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamAccountAliasImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	return nil, nil
-	//svc :=  meta.(*AWSClient).iamconn
+	svc :=  meta.(*AWSClient).iamconn
 
-	// Add code to list resources here
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//  return nil, err
-	//}
+	result, err := svc.ListAccountAliases(nil)
+	if err != nil {
+	  return nil, err
+	}
 
-    //existingInstances := ... // e.g. result.Buckets
-	//instances := make([]*core.Instance, len(existingInstances))
-	//for i, existingInstance := range existingInstances {
-	//	instances[i] = &core.Instance{
-	//		Name: strings.Replace(aws.StringValue(existingInstance.Name), "-", "_", -1),
-	//		ID:   aws.StringValue(existingInstance.Name),
-	//	}
-	//}
+    existingInstances := result.AccountAliases
+	instances := make([]*core.Instance, len(existingInstances))
+	for i, existingInstance := range existingInstances {
+		instances[i] = &core.Instance{
+			Name: core.Format(aws.StringValue(existingInstance)),
+			ID:   aws.StringValue(existingInstance),
+		}
+	}
 
-	// return instances, nil
+	return instances, nil
 }
 
 // Describes which other resources this resource can reference

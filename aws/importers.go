@@ -99,7 +99,7 @@ func Importers() map[string]core.Importer {
         // "aws_spot_datafeed_subscription": &AwsSpotDatafeedSubscriptionImporter{},
         // "aws_spot_fleet_request": &AwsSpotFleetRequestImporter{},
         // "aws_spot_instance_request": &AwsSpotInstanceRequestImporter{},
-        // "aws_volume_attachment": &AwsVolumeAttachmentImporter{},
+        "aws_volume_attachment": &AwsVolumeAttachmentImporter{},
 
         // Load Balancing Resources
         // "aws_lb": &AwsLbImporter{},
@@ -128,8 +128,8 @@ func Importers() map[string]core.Importer {
         // "aws_elasticache_subnet_group": &AwsElasticacheSubnetGroupImporter{},
 
         // IAM Resources
-        // "aws_iam_access_key": &AwsIamAccessKeyImporter{},
-        // "aws_iam_account_alias": &AwsIamAccountAliasImporter{},
+        // "aws_iam_access_key": Secret - cannot be imported,
+        "aws_iam_account_alias": &AwsIamAccountAliasImporter{},
         // "aws_iam_account_password_policy": &AwsIamAccountPasswordPolicyImporter{},
         // "aws_iam_group": &AwsIamGroupImporter{},
         // "aws_iam_group_membership": &AwsIamGroupMembershipImporter{},
