@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 	"time"
-	"runtime/debug"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -201,9 +200,6 @@ func (c *AWSClient) IsChinaCloud() bool {
 
 // Client configures and returns a fully initialized AWSClient
 func (c *Config) Client() (interface{}, error) {
-	fmt.Printf("Initializing AWS Client")
-	debug.PrintStack()
-
 	// Get the auth and region. This can fail if keys/regions were not
 	// specified and we're attempting to use the environment.
 	if c.SkipRegionValidation {

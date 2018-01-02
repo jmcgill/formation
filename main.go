@@ -8,7 +8,6 @@ import (
 	"flag"
 	"io/ioutil"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/jmcgill/formation/aws"
 	"github.com/jmcgill/formation/core"
 	"os"
@@ -296,7 +295,6 @@ func main() {
 			var instancesToImport []*terraform.InstanceState
 			importViaTerraform := true
 
-			spew.Dump(instance)
 			instanceInfo := &terraform.InstanceInfo{
 				// Id is a unique name to represent this instance. This is not related
 				// to InstanceState.ID in any way.
@@ -322,8 +320,6 @@ func main() {
 			//instancesToImport[0].Attributes["user_data_base64"] = "sentinal"
 
 			for _, instanceToImport := range instancesToImport {
-				spew.Dump(instanceToImport)
-
 				instanceState, err := provider.Refresh(instanceInfo, instanceToImport)
 				if err != nil {
 					log.Fatal("Error refreshing Instance State")
