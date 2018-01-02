@@ -19,8 +19,8 @@ Formation can import a limited subset of resources. See [importers.go](https://g
 
 Contributing is _super easy_ and pull requests are _very welcome_. To contribute, follow the guides below!
 
-1. [Installing Formation](https://github.com/jmcgill/formation/blob/master/docs/01 - Install.md)
-2. [Adding an Importer](https://github.com/jmcgill/formation/blob/master/docs/02 - Importing.md)
+1. [Installing Formation](https://github.com/jmcgill/formation/blob/master/docs/01_Install.md)
+2. [Adding an Importer](https://github.com/jmcgill/formation/blob/master/docs/02_Importing.md)
 
 # Known Weirdness
 
