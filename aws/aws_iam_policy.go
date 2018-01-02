@@ -2,7 +2,8 @@ package aws
 
 import (
 	"github.com/jmcgill/formation/core"
-	//"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/iam"
 )
 
 type AwsIamPolicyImporter struct {
@@ -10,25 +11,34 @@ type AwsIamPolicyImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamPolicyImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	return nil, nil
-	//svc :=  meta.(*AWSClient).iamconn
+	svc :=  meta.(*AWSClient).iamconn
 
 	// Add code to list resources here
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//  return nil, err
-	//}
+	existingInstances := make([]*iam.Policy, 0)
+	scope := "Local"
+	input := &iam.ListPoliciesInput{
+		Scope: &scope,
+	}
+	err := svc.ListPoliciesPages(input, func(o *iam.ListPoliciesOutput, lastPage bool) bool {
+		for _, i := range o.Policies {
+			existingInstances = append(existingInstances, i)
+		}
+		return true
+	})
 
-    //existingInstances := ... // e.g. result.Buckets
-	//instances := make([]*core.Instance, len(existingInstances))
-	//for i, existingInstance := range existingInstances {
-	//	instances[i] = &core.Instance{
-	//		Name: strings.Replace(aws.StringValue(existingInstance.Name), "-", "_", -1),
-	//		ID:   aws.StringValue(existingInstance.Name),
-	//	}
-	//}
+	if err != nil {
+		return nil, err
+	}
 
-	// return instances, nil
+	instances := make([]*core.Instance, len(existingInstances))
+	for i, existingInstance := range existingInstances {
+		instances[i] = &core.Instance{
+			Name: core.Format(aws.StringValue(existingInstance.PolicyName)),
+			ID:   aws.StringValue(existingInstance.Arn),
+		}
+	}
+
+	return instances, nil
 }
 
 // Describes which other resources this resource can reference

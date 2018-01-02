@@ -2,7 +2,8 @@ package aws
 
 import (
 	"github.com/jmcgill/formation/core"
-	//"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/iam"
 )
 
 type AwsIamInstanceProfileImporter struct {
@@ -10,29 +11,34 @@ type AwsIamInstanceProfileImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamInstanceProfileImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	return nil, nil
-	//svc :=  meta.(*AWSClient).iamconn
+	svc :=  meta.(*AWSClient).iamconn
 
-	// Add code to list resources here
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//  return nil, err
-	//}
+	existingInstances := make([]*iam.InstanceProfile, 0)
+	err := svc.ListInstanceProfilesPages(nil, func(o *iam.ListInstanceProfilesOutput, lastPage bool) bool {
+		for _, i := range o.InstanceProfiles {
+			existingInstances = append(existingInstances, i)
+		}
+		return true // continue paging
+	})
 
-    //existingInstances := ... // e.g. result.Buckets
-	//instances := make([]*core.Instance, len(existingInstances))
-	//for i, existingInstance := range existingInstances {
-	//	instances[i] = &core.Instance{
-	//		Name: strings.Replace(aws.StringValue(existingInstance.Name), "-", "_", -1),
-	//		ID:   aws.StringValue(existingInstance.Name),
-	//	}
-	//}
+	if err != nil {
+		return nil, err
+	}
 
-	// return instances, nil
+	instances := make([]*core.Instance, len(existingInstances))
+	for i, existingInstance := range existingInstances {
+		instances[i] = &core.Instance{
+			Name: core.Format(aws.StringValue(existingInstance.InstanceProfileName)),
+			ID:   aws.StringValue(existingInstance.InstanceProfileName),
+		}
+	}
+
+	return instances, nil
 }
 
 // Describes which other resources this resource can reference
 func (*AwsIamInstanceProfileImporter) Links() map[string]string {
 	return map[string]string{
+		"role": "aws_iam_role.name",
 	}
 }

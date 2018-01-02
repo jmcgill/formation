@@ -2,7 +2,9 @@ package aws
 
 import (
 	"github.com/jmcgill/formation/core"
-	//"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 type AwsIamUserSshKeyImporter struct {
@@ -10,25 +12,52 @@ type AwsIamUserSshKeyImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamUserSshKeyImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	return nil, nil
-	//svc :=  meta.(*AWSClient).iamconn
+	svc :=  meta.(*AWSClient).iamconn
 
 	// Add code to list resources here
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//  return nil, err
-	//}
+	existingInstances := make([]*iam.SSHPublicKeyMetadata, 0)
+	err := svc.ListSSHPublicKeysPages(nil, func(o *iam.ListSSHPublicKeysOutput, lastPage bool) bool {
+		for _, i := range o.SSHPublicKeys {
+			existingInstances = append(existingInstances, i)
+		}
+		return true
+	})
 
-    //existingInstances := ... // e.g. result.Buckets
-	//instances := make([]*core.Instance, len(existingInstances))
-	//for i, existingInstance := range existingInstances {
-	//	instances[i] = &core.Instance{
-	//		Name: strings.Replace(aws.StringValue(existingInstance.Name), "-", "_", -1),
-	//		ID:   aws.StringValue(existingInstance.Name),
-	//	}
-	//}
+	if err != nil {
+		return nil, err
+	}
 
-	// return instances, nil
+	instances := make([]*core.Instance, len(existingInstances))
+	for i, existingInstance := range existingInstances {
+		instances[i] = &core.Instance{
+			Name: core.Format(aws.StringValue(existingInstance.UserName)),
+			ID:   aws.StringValue(existingInstance.UserName),
+			CompositeID: map[string]string{
+				"key_id": aws.StringValue(existingInstance.SSHPublicKeyId),
+				"user_name": aws.StringValue(existingInstance.UserName),
+			},
+		}
+	}
+
+	return instances, nil
+}
+
+func (*AwsIamUserSshKeyImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
+	state := &terraform.InstanceState{
+		ID: in.CompositeID["key_id"],
+		Attributes: map[string]string {
+			"username": in.CompositeID["user_name"],
+			"encoding": "SSH",
+		},
+	}
+
+	return []*terraform.InstanceState{
+		state,
+	}, false, nil
+}
+
+func (*AwsIamUserSshKeyImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+	return in
 }
 
 // Describes which other resources this resource can reference

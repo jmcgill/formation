@@ -13,7 +13,6 @@ type AwsIamGroupImporter struct {
 func (*AwsIamGroupImporter) Describe(meta interface{}) ([]*core.Instance, error) {
 	svc :=  meta.(*AWSClient).iamconn
 
-	// Add code to list resources here
 	existingInstances := make([]*iam.Group, 0)
 	err := svc.ListGroupsPages(nil, func(o *iam.ListGroupsOutput, lastPage bool) bool {
 		for _, i := range o.Groups {
