@@ -242,7 +242,7 @@ func Importers() map[string]core.Importer {
         "aws_main_route_table_association": &AwsMainRouteTableAssociationImporter{},
         "aws_nat_gateway": &AwsNatGatewayImporter{},
         "aws_network_acl": &AwsNetworkAclImporter{},
-        // "aws_network_acl_rule": &AwsNetworkAclRuleImporter{},
+        "aws_network_acl_rule": &AwsNetworkAclRuleImporter{},
         // "aws_network_interface": &AwsNetworkInterfaceImporter{},
         // "aws_network_interface_attachment": &AwsNetworkInterfaceAttachmentImporter{},
 
