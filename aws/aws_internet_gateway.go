@@ -19,11 +19,13 @@ func (*AwsInternetGatewayImporter) Describe(meta interface{}) ([]*core.Instance,
 	}
 
     existingInstances := result.InternetGateways
+	names := make(map[string]int)
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
-		gatewayId := aws.StringValue(existingInstance.InternetGatewayId)
+		gatewayId := existingInstance.InternetGatewayId
+		name := NameTagOrDefault(existingInstance.Tags, gatewayId, names)
 		instances[i] = &core.Instance{
-			Name: core.Format(TagOrDefault(existingInstance.Tags, "Name", gatewayId)),
+			Name: name,
 			ID:   aws.StringValue(existingInstance.InternetGatewayId),
 		}
 	}

@@ -66,19 +66,12 @@ func (*AwsInstanceImporter) Describe(meta interface{}) ([]*core.Instance, error)
 		return nil, err
 	}
 
+	names := make(map[string]int)
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
-		name := ""
-		tag := GetTag(existingInstance.Tags, "Name")
-		if tag != nil && aws.StringValue(tag.Value) != "" {
-			// Tag names are useful, but not necessarily unique
-			name = aws.StringValue(tag.Value) + "-"
-		}
-
-		name += aws.StringValue(existingInstance.InstanceId)
-
+		name := NameTagOrDefault(existingInstance.Tags, existingInstance.InstanceId, names)
 		instances[i] = &core.Instance{
-			Name: core.Format(name),
+			Name: name,
 			ID:   aws.StringValue(existingInstance.InstanceId),
 		}
 	}
