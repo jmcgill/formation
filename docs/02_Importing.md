@@ -12,7 +12,7 @@ Terraform also defines resources for **connections** between types of infrastruc
 
 A full list of resources can be found at https://www.terraform.io/docs/providers/aws/index.html
 
-Before getting started, follow the instructions to [Install Formation](https://github.com/jmcgill/formation/blob/master/docs/01 - Install.md)
+Before getting started, follow the instructions to [Install Formation](https://github.com/jmcgill/formation/blob/master/docs/01_Install.md)
 
 ## Choosing a resource
 

@@ -30,4 +30,4 @@ The AWS Provider does not follow vendoring best practices, which causes a build 
     cd $GOPATH/src/github.com/jmcgill/formation
     go build
 
-If Formation builds without errors, you’re ready to move on to [Adding an Importer to Formation!](https://github.com/jmcgill/formation/blob/master/docs/02 - Importing.md)
+If Formation builds without errors, you’re ready to move on to [Adding an Importer to Formation!](https://github.com/jmcgill/formation/blob/master/docs/02_Importing.md)
