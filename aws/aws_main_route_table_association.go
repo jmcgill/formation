@@ -2,37 +2,91 @@ package aws
 
 import (
 	"github.com/jmcgill/formation/core"
-	//"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 type AwsMainRouteTableAssociationImporter struct {
 }
 
-// Lists all resources of this type
+// Find the main route table association for each VPC
 func (*AwsMainRouteTableAssociationImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	return nil, nil
-	//svc :=  meta.(*AWSClient).ec2conn
+	svc :=  meta.(*AWSClient).ec2conn
 
-	// Add code to list resources here
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//  return nil, err
-	//}
+	input := &ec2.DescribeRouteTablesInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("association.main"),
+				Values: []*string{
+					aws.String("true"),
+				},
+			},
+		},
+	}
+	result, err := svc.DescribeRouteTables(input)
+	if err != nil {
+		return nil, err
+	}
 
-    //existingInstances := ... // e.g. result.Buckets
-	//instances := make([]*core.Instance, len(existingInstances))
-	//for i, existingInstance := range existingInstances {
-	//	instances[i] = &core.Instance{
-	//		Name: strings.Replace(aws.StringValue(existingInstance.Name), "-", "_", -1),
-	//		ID:   aws.StringValue(existingInstance.Name),
-	//	}
-	//}
+	existingInstances := result.RouteTables // e.g. result.Buckets
+	instances := make([]*core.Instance, len(existingInstances))
+	names := make(map[string]int)
+	for i, existingInstance := range existingInstances {
+		var associationId *string
+		for _, a := range existingInstance.Associations {
+			if *a.Main == true {
+				associationId = a.RouteTableAssociationId
+			}
+		}
 
-	// return instances, nil
+		// Fetch the VPC to get a better name for this association
+		input := ec2.DescribeVpcsInput{
+			VpcIds: []*string {
+				existingInstance.VpcId,
+			},
+		}
+		vpcs, err := svc.DescribeVpcs(&input)
+		if err != nil || len(vpcs.Vpcs) != 1 {
+			return nil, err
+		}
+		vpc := vpcs.Vpcs[0]
+
+		vpcName := NameTagOrDefault(vpc.Tags, vpc.VpcId, names)
+		instances[i] = &core.Instance{
+			Name: vpcName,
+			ID:   aws.StringValue(associationId),
+			CompositeID: map[string]string{
+				"vpc_id": aws.StringValue(existingInstance.VpcId),
+				"route_table_id": aws.StringValue(existingInstance.RouteTableId),
+			},
+		}
+	}
+
+	return instances, nil
+}
+
+func (*AwsMainRouteTableAssociationImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
+	state := &terraform.InstanceState{
+		ID: in.ID,
+		Attributes: map[string]string {
+			"vpc_id": in.CompositeID["vpc_id"],
+			"route_table_id": in.CompositeID["route_table_id"],
+		},
+	}
+	return []*terraform.InstanceState{
+		state,
+	}, false, nil
+}
+
+func (*AwsMainRouteTableAssociationImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+	return in
 }
 
 // Describes which other resources this resource can reference
 func (*AwsMainRouteTableAssociationImporter) Links() map[string]string {
 	return map[string]string{
+		"vpc_id": "aws_vpc.id",
+		"route_table_id": "aws_route_table.id",
 	}
 }

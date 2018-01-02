@@ -383,13 +383,17 @@ func main() {
 			// TODO(jimmy): EC2: Add an Import function for when things don't quite go right. Could source UserData there.
 			//instancesToImport[0].Attributes["user_data_base64"] = "sentinal"
 
-			instanceToImport := instancesToImport[0]
-			//for _, instanceToImport := range instancesToImport {
+			for _, instanceToImport := range instancesToImport {
+				fmt.Printf("Importing this...\n")
+				spew.Dump(instanceToImport)
+
 				instanceState, err := provider.Refresh(instanceInfo, instanceToImport)
 				if err != nil {
 					fmt.Printf("Error refreshing Instance State: %s", err)
 					panic("Error refreshing Instance State")
 				}
+				fmt.Printf("Imported this....\n")
+				spew.Dump(instanceState)
 
 				if patchyImporter, ok := importer.(core.PatchyImporter); ok {
 					instanceState = patchyImporter.Clean(instanceState, localSchemaProvider.Meta())
@@ -440,7 +444,7 @@ func main() {
 
 				// Index this resource
 				IndexFields(resource, resource.Fields, index)
-			//}
+			}
 		}
 	}
 

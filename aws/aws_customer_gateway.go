@@ -2,7 +2,7 @@ package aws
 
 import (
 	"github.com/jmcgill/formation/core"
-	//"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws"
 )
 
 type AwsCustomerGatewayImporter struct {
@@ -10,25 +10,25 @@ type AwsCustomerGatewayImporter struct {
 
 // Lists all resources of this type
 func (*AwsCustomerGatewayImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	return nil, nil
-	//svc :=  meta.(*AWSClient).ec2conn
+	svc :=  meta.(*AWSClient).ec2conn
 
 	// Add code to list resources here
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//  return nil, err
-	//}
+	result, err := svc.DescribeCustomerGateways(nil)
+	if err != nil {
+	  return nil, err
+	}
 
-    //existingInstances := ... // e.g. result.Buckets
-	//instances := make([]*core.Instance, len(existingInstances))
-	//for i, existingInstance := range existingInstances {
-	//	instances[i] = &core.Instance{
-	//		Name: strings.Replace(aws.StringValue(existingInstance.Name), "-", "_", -1),
-	//		ID:   aws.StringValue(existingInstance.Name),
-	//	}
-	//}
+    names := make(map[string]int)
+	existingInstances := result.CustomerGateways
+	instances := make([]*core.Instance, len(existingInstances))
+	for i, existingInstance := range existingInstances {
+		instances[i] = &core.Instance{
+			Name: NameTagOrDefault(existingInstance.Tags, existingInstance.CustomerGatewayId, names),
+			ID:   aws.StringValue(existingInstance.CustomerGatewayId),
+		}
+	}
 
-	// return instances, nil
+	 return instances, nil
 }
 
 // Describes which other resources this resource can reference

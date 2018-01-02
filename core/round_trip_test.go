@@ -454,7 +454,7 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		Expect(printer.Print(parser.Parse(&state))).To(Equal(expected))
 	})
 
-	It("BUG6: Multiple list entries with child lists", func() {
+	It("BUG6: Scalar list with greater than ten entries", func() {
 		// S3 objects have deeply nested lists
 		state := terraform.InstanceState{
 			Attributes: map[string]string{
@@ -480,12 +480,6 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 				"ingress.108330761.cidr_blocks.8": "69.127.178.225/32",
 				"ingress.108330761.cidr_blocks.9": "66.65.93.66/32",
 				"ingress.108330761.description": "hello",
-				//"ingress.108330761.from_port": "3306",
-				//"ingress.108330761.ipv6_cidr_blocks.#": "0",
-				//"ingress.108330761.protocol": "tcp",
-				//"ingress.108330761.security_groups.#": "0",
-				//"ingress.108330761.self": "false",
-				//"ingress.108330761.to_port": "3306",
 			},
 		}
 

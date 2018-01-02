@@ -226,19 +226,22 @@ func Importers() map[string]core.Importer {
         "aws_sqs_queue_policy": &AwsSqsQueuePolicyImporter{},
 
         // VPC Resources
-        // "aws_customer_gateway": &AwsCustomerGatewayImporter{},
+        "aws_customer_gateway": &AwsCustomerGatewayImporter{},
+
+        // Advanced resources are not imported
         // "aws_default_network_acl": &AwsDefaultNetworkAclImporter{},
         // "aws_default_route_table": &AwsDefaultRouteTableImporter{},
         // "aws_default_security_group": &AwsDefaultSecurityGroupImporter{},
         // "aws_default_subnet": &AwsDefaultSubnetImporter{},
         // "aws_default_vpc": &AwsDefaultVpcImporter{},
         // "aws_default_vpc_dhcp_options": &AwsDefaultVpcDhcpOptionsImporter{},
-        // "aws_egress_only_internet_gateway": &AwsEgressOnlyInternetGatewayImporter{},
-        // "aws_flow_log": &AwsFlowLogImporter{},
+
+        "aws_egress_only_internet_gateway": &AwsEgressOnlyInternetGatewayImporter{},
+        "aws_flow_log": &AwsFlowLogImporter{},
         "aws_internet_gateway": &AwsInternetGatewayImporter{},
-        // "aws_main_route_table_association": &AwsMainRouteTableAssociationImporter{},
+        "aws_main_route_table_association": &AwsMainRouteTableAssociationImporter{},
         "aws_nat_gateway": &AwsNatGatewayImporter{},
-        // "aws_network_acl": &AwsNetworkAclImporter{},
+        "aws_network_acl": &AwsNetworkAclImporter{},
         // "aws_network_acl_rule": &AwsNetworkAclRuleImporter{},
         // "aws_network_interface": &AwsNetworkInterfaceImporter{},
         // "aws_network_interface_attachment": &AwsNetworkInterfaceAttachmentImporter{},
