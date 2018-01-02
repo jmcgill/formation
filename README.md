@@ -15,6 +15,13 @@ odd) design choices in order to preserve this compatibility.
 
 Formation can import a limited subset of resources. See [importers.go](https://github.com/jmcgill/formation/blob/master/aws/importers.go) for a list of resources that are supported.
 
+# Contributing
+
+Contributing is _super easy_ and pull requests are _very welcome_. To contribute, follow the guides below!
+
+1. [Installing Formation](https://github.com/jmcgill/formation/blob/master/docs/01 - Install.md)
+2. [Adding an Importer](https://github.com/jmcgill/formation/blob/master/docs/02 - Importing.md)
+
 # Known Weirdness
 
 Formation depends on the fact that the Terraform AWS Provider uses the terraform/helpers interface, and breaks through
@@ -25,18 +32,6 @@ in the same state as those accessed by the AWS provider.
 
 In an ideal world, this logic would be part of the same package as the AWS Provider, and we would not need this
 complexity.
-
-# Contributing
-
-Contributing is _super easy_. For each resource, we need to:
-
-1. Discover/List all resources of that type
-2. Extract the unique ID (as used by Terraform) and a human readable Name
-
-See [aws_iam_role.go](https://github.com/jmcgill/formation/blob/master/aws/aws_iam_role.go) for an example of how simple this is!
-
-To contribute, pick any resource that doesn't yet have an imported in [importers.go](https://github.com/jmcgill/formation/blob/master/aws/importers.go) and submit a Pull Request to
-implement it.
 
 # Design Document
 
