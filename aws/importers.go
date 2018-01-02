@@ -128,27 +128,35 @@ func Importers() map[string]core.Importer {
         // "aws_elasticache_subnet_group": &AwsElasticacheSubnetGroupImporter{},
 
         // IAM Resources
-        // "aws_iam_access_key": Secret - cannot be imported,
+        // Contains secrets - cannot be imported
+        // "aws_iam_access_key": &AwsIamAccessKeyImporter{},
         "aws_iam_account_alias": &AwsIamAccountAliasImporter{},
         "aws_iam_account_password_policy": &AwsIamAccountPasswordPolicyImporter{},
         "aws_iam_group": &AwsIamGroupImporter{},
         "aws_iam_group_membership": &AwsIamGroupMembershipImporter{},
-        // "aws_iam_group_policy": &AwsIamGroupPolicyImporter{},
-        // "aws_iam_group_policy_attachment": &AwsIamGroupPolicyAttachmentImporter{},
-        // "aws_iam_instance_profile": &AwsIamInstanceProfileImporter{},
+        "aws_iam_group_policy": &AwsIamGroupPolicyImporter{},
+        "aws_iam_group_policy_attachment": &AwsIamGroupPolicyAttachmentImporter{},
+        "aws_iam_instance_profile": &AwsIamInstanceProfileImporter{},
         // "aws_iam_openid_connect_provider": &AwsIamOpenidConnectProviderImporter{},
-        // "aws_iam_policy": &AwsIamPolicyImporter{},
+        "aws_iam_policy": &AwsIamPolicyImporter{},
+
+        // user_policy, role_policy and group_policy are used instead of generic policy attachments
         // "aws_iam_policy_attachment": &AwsIamPolicyAttachmentImporter{},
         "aws_iam_role": &AwsIamRoleImporter{},
-        // "aws_iam_role_policy": &AwsIamRolePolicyImporter{},
-        // "aws_iam_role_policy_attachment": &AwsIamRolePolicyAttachmentImporter{},
-        // "aws_iam_saml_provider": &AwsIamSamlProviderImporter{},
+        "aws_iam_role_policy": &AwsIamRolePolicyImporter{},
+        "aws_iam_role_policy_attachment": &AwsIamRolePolicyAttachmentImporter{},
+        "aws_iam_saml_provider": &AwsIamSamlProviderImporter{},
+
+        // Contains secrets - cannot be imported
         // "aws_iam_server_certificate": &AwsIamServerCertificateImporter{},
         "aws_iam_user": &AwsIamUserImporter{},
+
+        // Contains secrets - cannot be imported
         // "aws_iam_user_login_profile": &AwsIamUserLoginProfileImporter{},
-        // "aws_iam_user_policy": &AwsIamUserPolicyImporter{},
-        // "aws_iam_user_policy_attachment": &AwsIamUserPolicyAttachmentImporter{},
-        // "aws_iam_user_ssh_key": &AwsIamUserSshKeyImporter{},
+
+        "aws_iam_user_policy": &AwsIamUserPolicyImporter{},
+        "aws_iam_user_policy_attachment": &AwsIamUserPolicyAttachmentImporter{},
+        "aws_iam_user_ssh_key": &AwsIamUserSshKeyImporter{},
 
         // Kinesis Resources
         // "aws_kinesis_stream": &AwsKinesisStreamImporter{},
@@ -215,7 +223,7 @@ func Importers() map[string]core.Importer {
 
         // SQS Resources
         "aws_sqs_queue": &AwsSqsQueueImporter{},
-        // "aws_sqs_queue_policy": &AwsSqsQueuePolicyImporter{},
+        "aws_sqs_queue_policy": &AwsSqsQueuePolicyImporter{},
 
         // VPC Resources
         // "aws_customer_gateway": &AwsCustomerGatewayImporter{},
@@ -227,21 +235,24 @@ func Importers() map[string]core.Importer {
         // "aws_default_vpc_dhcp_options": &AwsDefaultVpcDhcpOptionsImporter{},
         // "aws_egress_only_internet_gateway": &AwsEgressOnlyInternetGatewayImporter{},
         // "aws_flow_log": &AwsFlowLogImporter{},
-        // "aws_internet_gateway": &AwsInternetGatewayImporter{},
+        "aws_internet_gateway": &AwsInternetGatewayImporter{},
         // "aws_main_route_table_association": &AwsMainRouteTableAssociationImporter{},
-        // "aws_nat_gateway": &AwsNatGatewayImporter{},
+        "aws_nat_gateway": &AwsNatGatewayImporter{},
         // "aws_network_acl": &AwsNetworkAclImporter{},
         // "aws_network_acl_rule": &AwsNetworkAclRuleImporter{},
         // "aws_network_interface": &AwsNetworkInterfaceImporter{},
         // "aws_network_interface_attachment": &AwsNetworkInterfaceAttachmentImporter{},
+
+        // Incompatible with aws_route_table.
         // "aws_route": &AwsRouteImporter{},
-        // "aws_route_table": &AwsRouteTableImporter{},
+
+        "aws_route_table": &AwsRouteTableImporter{},
         // "aws_route_table_association": &AwsRouteTableAssociationImporter{},
-        // "aws_security_group": &AwsSecurityGroupImporter{},
+        "aws_security_group": &AwsSecurityGroupImporter{},
         // "aws_network_interface_sg_attachment": &AwsNetworkInterfaceSgAttachmentImporter{},
         // "aws_security_group_rule": &AwsSecurityGroupRuleImporter{},
-        // "aws_subnet": &AwsSubnetImporter{},
-        // "aws_vpc": &AwsVpcImporter{},
+        "aws_subnet": &AwsSubnetImporter{},
+        "aws_vpc": &AwsVpcImporter{},
         // "aws_vpc_dhcp_options": &AwsVpcDhcpOptionsImporter{},
         // "aws_vpc_dhcp_options_association": &AwsVpcDhcpOptionsAssociationImporter{},
         // "aws_vpc_endpoint": &AwsVpcEndpointImporter{},

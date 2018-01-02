@@ -6,6 +6,8 @@ import (
 	"sort"
 
 	"github.com/hashicorp/terraform/terraform"
+	"strings"
+	"strconv"
 )
 
 type InstanceState terraform.InstanceState
@@ -22,8 +24,45 @@ type KeyValue struct {
 	Value string
 }
 
+func isNumeric(in string) bool {
+	if _, err := strconv.Atoi(in); err == nil {
+		return true
+	}
+	return false
+}
+
+func asInteger(in string) int {
+	v, _ := strconv.Atoi(in);
+	return v
+}
+
+type KeyValueList []KeyValue
+
+func (s KeyValueList) Len() int {
+	return len(s)
+}
+
+func (s KeyValueList) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s KeyValueList) Less(i, j int) bool {
+	ip := strings.Split(s[i].Key, ".")
+	jp := strings.Split(s[j].Key, ".")
+	index := 0
+
+	for jp[index] == ip[index] {
+		index += 1
+	}
+
+	if isNumeric(jp[index]) && isNumeric(ip[index]) {
+		return asInteger(ip[index]) < asInteger(jp[index])
+	}
+	return ip[index] < jp[index]
+}
+
 type SortedInstanceState struct {
-	Attributes []KeyValue
+	Attributes KeyValueList
 }
 
 func (s *InstanceState) String() string {
@@ -48,24 +87,20 @@ func (s *InstanceState) String() string {
 	return buf.String()
 }
 
-// TODO(jimmy): Is this used?
 func (s *InstanceState) ToSorted() *SortedInstanceState {
 	r := new(SortedInstanceState)
 
 	attributes := s.Attributes
-	attrKeys := make([]string, 0, len(attributes))
-	for ak, _ := range attributes {
-		attrKeys = append(attrKeys, ak)
-	}
-	sort.Strings(attrKeys)
 
-	for _, ak := range attrKeys {
+	//attrKeys := make([]string, 0, len(attributes))
+
+	for k, v := range attributes {
 		kv := KeyValue{
-			Key:   ak,
-			Value: attributes[ak],
+			Key:   k,
+			Value: v,
 		}
 		r.Attributes = append(r.Attributes, kv)
 	}
-
+	sort.Sort(r.Attributes)
 	return r
 }

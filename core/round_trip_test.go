@@ -362,6 +362,151 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		printer := Printer{}
 
 		x := printer.Print(parser.Parse(&state))
+		Expect(x).To(Equal(expected))
+	})
+
+	It("BUG4: Handles lists inside lists", func() {
+		// S3 objects have deeply nested lists
+		state := terraform.InstanceState{
+			Attributes: map[string]string{
+				"ingress.2541437006.cidr_blocks.#": "1",
+				"ingress.2541437006.protocol": "tcp",
+				"ingress.2541437006.cidr_blocks.0": "0.0.0.0/0",
+				"ingress.#": "1",
+				"ingress.2541437006.ipv6_cidr_blocks.#": "0",
+				"ingress.2541437006.security_groups.#": "0",
+			},
+		}
+
+		expected := cleanMultiline(`
+		resource "" "" {
+		    ingress {
+		        cidr_blocks = [
+		            "0.0.0.0/0",
+		        ]
+		        protocol = "tcp"
+		    }
+		}`)
+
+		parser := InstanceStateParser{}
+		printer := Printer{}
+
+		Expect(printer.Print(parser.Parse(&state))).To(Equal(expected))
+	})
+
+	It("Repeated object list", func() {
+		// S3 objects have deeply nested lists
+		state := terraform.InstanceState{
+			Attributes: map[string]string{
+				"item.1.name": "James",
+				"item.2.name": "Sophie",
+				"item.#": "2",
+			},
+		}
+
+		expected := cleanMultiline(`
+		resource "" "" {
+		    item {
+		        name = "James"
+		    }
+
+		    item {
+		        name = "Sophie"
+		    }
+		}`)
+
+		parser := InstanceStateParser{}
+		printer := Printer{}
+		x := printer.Print(parser.Parse(&state))
+		fmt.Printf(x)
+		Expect(x).To(Equal(expected))
+	})
+
+	It("BUG5: Multiple list entries with child lists", func() {
+		// S3 objects have deeply nested lists
+		state := terraform.InstanceState{
+			Attributes: map[string]string{
+				"egress.3198106456.security_groups.303881662": "sg-abc",
+				"egress.3198106456.security_groups.#": "1",
+				"egress.306721562.security_groups.303881662": "sg-def",
+				"egress.306721562.security_groups.#": "1",
+				"egress.#": "2",
+			},
+		}
+
+		expected := cleanMultiline(`
+		resource "" "" {
+		    egress {
+		        security_groups = [
+		            "sg-def",
+		        ]
+		    }
+
+		    egress {
+		        security_groups = [
+		            "sg-abc",
+		        ]
+		    }
+		}`)
+
+		parser := InstanceStateParser{}
+		printer := Printer{}
+		Expect(printer.Print(parser.Parse(&state))).To(Equal(expected))
+	})
+
+	It("BUG6: Multiple list entries with child lists", func() {
+		// S3 objects have deeply nested lists
+		state := terraform.InstanceState{
+			Attributes: map[string]string{
+				"ingress.#": "1",
+				"ingress.108330761.cidr_blocks.#": "19",
+				"ingress.108330761.cidr_blocks.0": "52.6.1.1/32",
+				"ingress.108330761.cidr_blocks.1": "208.82.15.122/32",
+				"ingress.108330761.cidr_blocks.10": "10.30.0.0/15",
+				"ingress.108330761.cidr_blocks.11": "76.175.104.150/32",
+				"ingress.108330761.cidr_blocks.12": "54.68.30.98/32",
+				"ingress.108330761.cidr_blocks.13": "54.68.45.3/32",
+				"ingress.108330761.cidr_blocks.14": "54.164.204.122/32",
+				"ingress.108330761.cidr_blocks.15": "54.172.100.146/32",
+				"ingress.108330761.cidr_blocks.16": "73.222.147.41/32",
+				"ingress.108330761.cidr_blocks.17": "24.5.151.60/32",
+				"ingress.108330761.cidr_blocks.18": "24.5.150.186/32",
+				"ingress.108330761.cidr_blocks.2": "10.20.0.0/16",
+				"ingress.108330761.cidr_blocks.3": "104.7.13.39/32",
+				"ingress.108330761.cidr_blocks.4": "209.122.233.114/32",
+				"ingress.108330761.cidr_blocks.5": "172.56.38.153/32",
+				"ingress.108330761.cidr_blocks.6": "47.208.191.203/32",
+				"ingress.108330761.cidr_blocks.7": "73.70.34.243/32",
+				"ingress.108330761.cidr_blocks.8": "69.127.178.225/32",
+				"ingress.108330761.cidr_blocks.9": "66.65.93.66/32",
+				"ingress.108330761.description": "hello",
+				//"ingress.108330761.from_port": "3306",
+				//"ingress.108330761.ipv6_cidr_blocks.#": "0",
+				//"ingress.108330761.protocol": "tcp",
+				//"ingress.108330761.security_groups.#": "0",
+				//"ingress.108330761.self": "false",
+				//"ingress.108330761.to_port": "3306",
+			},
+		}
+
+		expected := cleanMultiline(`
+		resource "" "" {
+		    egress {
+		        security_groups = [
+		            "sg-def",
+		        ]
+		    }
+
+		    egress {
+		        security_groups = [
+		            "sg-abc",
+		        ]
+		    }
+		}`)
+
+		parser := InstanceStateParser{}
+		printer := Printer{}
+		x := printer.Print(parser.Parse(&state))
 		fmt.Println(x)
 		Expect(x).To(Equal(expected))
 	})

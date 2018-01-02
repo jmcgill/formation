@@ -368,6 +368,7 @@ func main() {
 			}
 
 			if patchyImporter, ok := importer.(core.PatchyImporter); ok {
+				fmt.Printf("*** Applying patchy interface\n")
 				instancesToImport, importViaTerraform, err = patchyImporter.Import(instance, localSchemaProvider.Meta())
 			}
 
@@ -382,61 +383,64 @@ func main() {
 			// TODO(jimmy): EC2: Add an Import function for when things don't quite go right. Could source UserData there.
 			//instancesToImport[0].Attributes["user_data_base64"] = "sentinal"
 
-			// TODO(jimmy): It's not always safe to assume that import returns a single resource.
-			// If it returns multiple, do we need to refresh eac
-			// h one individually? I need a good
-			// case study here before guessing at the behaviour.
-			instanceState, err := provider.Refresh(instanceInfo, instancesToImport[0])
-			if err != nil {
-				fmt.Printf("Error refreshing Instance State: %s", err)
-				panic("Error refreshing Instance State")
-			}
+			instanceToImport := instancesToImport[0]
+			//for _, instanceToImport := range instancesToImport {
+				instanceState, err := provider.Refresh(instanceInfo, instanceToImport)
+				if err != nil {
+					fmt.Printf("Error refreshing Instance State: %s", err)
+					panic("Error refreshing Instance State")
+				}
 
-			if patchyImporter, ok := importer.(core.PatchyImporter); ok {
-				instanceState = patchyImporter.Clean(instanceState, localSchemaProvider.Meta())
-			}
+				if patchyImporter, ok := importer.(core.PatchyImporter); ok {
+					instanceState = patchyImporter.Clean(instanceState, localSchemaProvider.Meta())
+				}
 
-			// EC2: Clear our sentinal if not used
-			//if instanceState.Attributes["user_data_base64"] == "sentinal" {
-			//	delete(instanceState.Attributes, "user_data_base64")
+				// EC2: Clear our sentinal if not used
+				//if instanceState.Attributes["user_data_base64"] == "sentinal" {
+				//	delete(instanceState.Attributes, "user_data_base64")
+				//}
+
+				// EC2: Clear EBS volumes
+				//for key, _ := range instanceState.Attributes {
+				//	if strings.HasPrefix(key, "ebs_block_device") {
+				//		delete(instanceState.Attributes, key)
+				//	}
+				//}
+
+				// Convert this resource from Terraform's internal format to a Formation Resource
+				parser := core.InstanceStateParser{}
+				resource := parser.Parse(instanceState)
+
+				/// Fill in name and type
+				resource.Name = instance.Name
+				resource.Type = resourceType
+
+				// Get the schema for this resource
+				request := &terraform.ProviderSchemaRequest{
+					ResourceTypes: []string{resourceType},
+				}
+				s, _ := provider.GetSchema(request)
+
+				fmt.Printf("FIELDS FIELDS FIELDS\n")
+				for k, v := range instanceState.Attributes {
+					fmt.Printf("\"%s\": \"%s\",\n", k, v)
+				}
+				// Mark computed fields - we don't want to output these
+				MarkComputedFields(resource.Fields, s.ResourceTypes[resourceType])
+
+				// To get the resource schema we need to poke into the internal implementation of the AWS provider
+				schemaProvider := provider.(*schema.Provider)
+				DecorateWithDefaultFields(instanceState, resource.Fields, schemaProvider.ResourcesMap[resourceType].Schema, "")
+
+				// Store this resource for later
+				allResources[resourceType] = append(allResources[resourceType], &ImportedResource{
+					resource: resource,
+					state:    instanceState,
+				})
+
+				// Index this resource
+				IndexFields(resource, resource.Fields, index)
 			//}
-
-			// EC2: Clear EBS volumes
-			//for key, _ := range instanceState.Attributes {
-			//	if strings.HasPrefix(key, "ebs_block_device") {
-			//		delete(instanceState.Attributes, key)
-			//	}
-			//}
-
-			// Convert this resource from Terraform's internal format to a Formation Resource
-			parser := core.InstanceStateParser{}
-			resource := parser.Parse(instanceState)
-
-			/// Fill in name and type
-			resource.Name = instance.Name
-			resource.Type = resourceType
-
-			// Get the schema for this resource
-			request := &terraform.ProviderSchemaRequest{
-				ResourceTypes: []string{resourceType},
-			}
-			s, _ := provider.GetSchema(request)
-
-			// Mark computed fields - we don't want to output these
-			MarkComputedFields(resource.Fields, s.ResourceTypes[resourceType])
-
-			// To get the resource schema we need to poke into the internal implementation of the AWS provider
-			schemaProvider := provider.(*schema.Provider)
-			DecorateWithDefaultFields(instanceState, resource.Fields, schemaProvider.ResourcesMap[resourceType].Schema, "")
-
-			// Store this resource for later
-			allResources[resourceType] = append(allResources[resourceType], &ImportedResource{
-				resource: resource,
-				state: instanceState,
-			})
-
-			// Index this resource
-			IndexFields(resource, resource.Fields, index)
 		}
 	}
 

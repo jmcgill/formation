@@ -20,6 +20,15 @@ func GetTag(tags []*ec2.Tag, key string) *ec2.Tag {
 	return nil
 }
 
+func TagOrDefault(tags []*ec2.Tag, key string, otherwise string) string {
+	for _, t := range tags {
+		if aws.StringValue(t.Key) == key {
+			return aws.StringValue(t.Value)
+		}
+	}
+	return otherwise
+}
+
 // Lists all resources of this type
 func (*AwsInstanceImporter) Describe(meta interface{}) ([]*core.Instance, error) {
 	svc :=  meta.(*AWSClient).ec2conn

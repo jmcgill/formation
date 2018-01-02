@@ -2,7 +2,7 @@ package core
 
 import (
 	"bytes"
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -138,15 +138,18 @@ func (p *Printer) printJSON(field *Field) bool {
 		return false
 	}
 
-	var d map[string]interface{}
-	err := json.Unmarshal([]byte(field.ScalarValue.StringValue), &d)
-	if err != nil {
-		fmt.Printf("This doesn't appear to be JSON\n")
-		return false
-	}
+	// ${} references in Policy documents conflict with Terraform. Use &{} instead
+	//var d map[string]interface{}
+	//err := json.Unmarshal([]byte(field.ScalarValue.StringValue), &d)
+	//if err != nil {
+	//	fmt.Printf("This doesn't appear to be JSON\n")
+	//	return false
+	//}
+	//
+	//s, _ := json.MarshalIndent(d, "", "    ")
 
-	s, _ := json.MarshalIndent(d, "", "    ")
-	p.write("%s = <<EOF\n%s\nEOF\n", field.Key, s)
+	fixed := strings.Replace(string(field.ScalarValue.StringValue), "${", "&{", -1)
+	p.write("%s = <<EOF\n%sEOF\n", field.Key, fixed)
 	return true
 }
 

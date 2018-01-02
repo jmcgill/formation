@@ -20,6 +20,7 @@ const (
 	PARENT_ROOT ParentType = iota
 	PARENT_MAP
 	PARENT_LIST
+	PARENT_NESTED
 )
 
 // We keep a queue of state as we traverse the resource, so that we can walk
@@ -55,16 +56,22 @@ func (p *InstanceStateParser) currentResource() *InlineResource {
 }
 
 func (p *InstanceStateParser) Parse(state *terraform.InstanceState) *Resource {
-	fmt.Printf("I HAVE BEGUN PARSING AND THE ID IS %s\n\n", state.Attributes["id"])
+	//fmt.Printf("I HAVE BEGUN PARSING AND THE ID IS %s\n\n", state.Attributes["id"])
 
 	resource := &Resource{
 	}
+
+	fmt.Printf("STATE IS...\n")
+	spew.Dump(state)
 
 	var wrappedState terraform_helpers.InstanceState
 	wrappedState = terraform_helpers.InstanceState(*state)
 	sortedState := wrappedState.ToSorted()
 
-	spew.Dump(sortedState)
+	fmt.Printf("Sorted state\n")
+	for k, v := range sortedState.Attributes {
+		fmt.Printf("%s : %v\n", k, v)
+	}
 
 	s := State{
 		remainingChildren: 0,
@@ -129,6 +136,7 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 
 		if strings.ContainsRune(listPrefix, '.') {
 			fmt.Printf("This is a nested resource, because it contains a dot\n")
+			fmt.Printf("I am setting the list prefix to %s\n", strings.Join(parts[:p.state().depth], ".") + ".")
 			// Create a new nested resource
 			field := &Field{
 				FieldType:   NESTED,
@@ -141,7 +149,7 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 			s := &State{
 				parent:            field.NestedValue,
 				remainingChildren: 0,
-				parentType:        PARENT_MAP,
+				parentType:        PARENT_NESTED,
 				depth:             p.state().depth + 0,
 				prefix:            strings.Join(parts[:p.state().depth], ".") + ".",
 			}
@@ -208,7 +216,7 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 				s := &State{
 					parent:            field.NestedValue,
 					remainingChildren: 0,
-					parentType:        PARENT_MAP,
+					parentType:        PARENT_NESTED,
 					depth:             p.state().depth + 0,
 					prefix:            strings.Join(parts[:p.state().depth], ".") + ".",
 				}
@@ -226,6 +234,9 @@ func (p *InstanceStateParser) parseAttribute(attribute string, value string) {
 
 	fmt.Printf("The current prefix is: %s\n", p.state().prefix)
 	fmt.Printf("Looking for dot rune in attribute %s\n", attribute)
+	if p.state().parentType == PARENT_MAP {
+		fmt.Printf("I am in a map so I am assuming simple attribute\n")
+	}
 
 	if !strings.ContainsRune(attribute, '.') || p.state().parentType == PARENT_MAP {
 		fmt.Printf("Parsing a simple attribute\n")
