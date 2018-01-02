@@ -16,13 +16,13 @@ func (*AwsRouteTableImporter) Describe(meta interface{}) ([]*core.Instance, erro
 	if err != nil {
 	  return nil, err
 	}
-
     existingInstances := result.RouteTables // e.g. result.Buckets
+
+    namer := NewTagNamer()
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
-		id := aws.StringValue(existingInstance.RouteTableId)
 		instances[i] = &core.Instance{
-			Name: core.Format(TagOrDefault(existingInstance.Tags, "Name", id)),
+			Name: namer.NameOrDefault(existingInstance.Tags, existingInstance.RouteTableId),
 			ID:   aws.StringValue(existingInstance.RouteTableId),
 		}
 	}

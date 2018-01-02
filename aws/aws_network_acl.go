@@ -17,14 +17,13 @@ func (*AwsNetworkAclImporter) Describe(meta interface{}) ([]*core.Instance, erro
 	if err != nil {
 	  return nil, err
 	}
-
     existingInstances := result.NetworkAcls
-    names := make(map[string]int)
+
+    namer := NewTagNamer()
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
-		name := NameTagOrDefault(existingInstance.Tags, existingInstance.NetworkAclId, names)
 		instances[i] = &core.Instance{
-			Name: name,
+			Name: namer.NameOrDefault(existingInstance.Tags, existingInstance.NetworkAclId),
 			ID:   aws.StringValue(existingInstance.NetworkAclId),
 		}
 	}

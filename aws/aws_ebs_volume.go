@@ -26,19 +26,11 @@ func (*AwsEbsVolumeImporter) Describe(meta interface{}) ([]*core.Instance, error
 		return nil, err
 	}
 
+	namer := NewTagNamer()
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
-		name := ""
-		tag := GetTag(existingInstance.Tags, "Name")
-		if tag != nil && aws.StringValue(tag.Value) != "" {
-			// Tag names are useful, but not necessarily unique
-			name = aws.StringValue(tag.Value) + "-"
-		}
-
-		name += aws.StringValue(existingInstance.VolumeId)
-
 		instances[i] = &core.Instance{
-			Name: core.Format(name),
+			Name: namer.NameOrDefault(existingInstance.Tags, existingInstance.VolumeId),
 			ID:   aws.StringValue(existingInstance.VolumeId),
 		}
 	}

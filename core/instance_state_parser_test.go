@@ -207,7 +207,6 @@ var _ = Describe("InstanceStateParser", func() {
 
 		parser := InstanceStateParser{}
 		x := *parser.Parse(&state)
-		// fmt.Print(x.Fields.Fields[0].NestedValue.Fields[0].FieldType)
 		Expect(x).To(Equal(expectedResource))
 	})
 })

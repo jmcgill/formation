@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"flag"
 	"io/ioutil"
@@ -23,7 +24,6 @@ type UIInput struct {
 }
 
 func (u *UIInput) Input(opts *terraform.InputOpts) (string, error) {
-	fmt.Printf("Asking for input %s\n", opts.Query)
 	return "us-west-2", nil
 }
 
@@ -64,9 +64,7 @@ func MarkComputedFields(r *core.InlineResource, s *configschema.Block) *core.Inl
 }
 
 func ValueSet(r *core.InlineResource, key string) bool {
-	fmt.Printf("Looking for value set %s\n", key)
 	for _, f := range r.Fields {
-		fmt.Printf("Checking whether value is set - comparing %s to %s\n", f.Key, key)
 		if f.Key == key {
 			return true
 		}
@@ -92,8 +90,6 @@ func DecorateWithDefaultFields(instanceState *terraform.InstanceState, r *core.I
 			continue
 		}
 
-		fmt.Printf("****** TRYING TO SET DEFAULT FIELD %s\n", key)
-
 		var defaultValue string
 
 		// TODO(jimmy): Switch to a TYPE enum - can pull this straight out of the schema object
@@ -108,8 +104,6 @@ func DecorateWithDefaultFields(instanceState *terraform.InstanceState, r *core.I
 		}
 
 		instancePath := AppendToInstancePath(path, key)
-
-		fmt.Printf("***** DEFAULT VALUE PATH IS%s\n", instancePath)
 		instanceState.Attributes[instancePath] = defaultValue
 
 		field := &core.Field{
@@ -127,26 +121,12 @@ func DecorateWithDefaultFields(instanceState *terraform.InstanceState, r *core.I
 	for _, f := range r.Fields {
 		instancePath := AppendToInstancePath(path, f.Key)
 
-		// TODO(jimmy): Work out how default values should work for scalar lists
 		// HACK: Assume all resources are nested
 		if f.FieldType == core.LIST && f.NestedValue.Fields[0].FieldType == core.NESTED {
 			// Scalar lists will never have a default value, so we don't need to expand the parent key when
 			// recursing into a list. Instead we will rely on each nested object to do this.
-			fmt.Printf("Recursing into list\n")
 			DecorateWithDefaultFields(instanceState, f.NestedValue.Fields[0].NestedValue, terraformSchema[f.Key].Elem.(*schema.Resource).Schema, instancePath)
 		}
-
-		//if f.FieldType == core.NESTED {
-		//	fmt.Printf("Recursing into nested resource - instance state is now %s\n", instanceState)
-		//	// TODO(jimmy): parentKey needs to be the path to the nested objecdt e.g. foo.1234 but I don't
-		//	// currently set this while parsing (bucause it would require lookahead). Fix this - perhaps by having
-		//	// the first child discovered fill it in.
-		//	//
-		//	// This depends on whether there is ever a list with a required-and-default set of keys that is not filled
-		//	// in by importing. I need to work through some more concrete examples first.
-		//	// TODO(jimmy): This is probably wrong?
-		//	DecorateWithDefaultFields(instanceState, f.NestedValue, terraformSchema, instancePath)
-		//}
 	}
 
 	return r
@@ -173,7 +153,6 @@ func IndexFields(resource *core.Resource, r *core.InlineResource, index FieldInd
 				continue
 			}
 
-			fmt.Printf("**** %s : %s\n", f.Path, f.ScalarValue.StringValue)
 			e := &FieldIndexEntry{
 				path:     resource.Type + "." + f.Path,
 				resource: resource,
@@ -195,13 +174,9 @@ func IndexFields(resource *core.Resource, r *core.InlineResource, index FieldInd
 }
 
 func  FindLink(index FieldIndex, value string, allowedPath string) (*core.Resource, bool) {
-	fmt.Printf("Looking for link for value: %s\n", value)
 	if fields, ok := index[value]; ok {
-		fmt.Printf("Yup - that is in our reverse index!\n")
 		for _, field := range fields {
-			fmt.Printf("Performing allowed path comparison %s - %s\n", field.path, allowedPath)
 			if field.path == allowedPath {
-				fmt.Printf("Paths matched!\n")
 				return field.resource, true
 			}
 		}
@@ -226,15 +201,11 @@ func RecursivelyLinkFields(root* core.Resource, r *core.InlineResource, links ma
 				z = f.Key
 			}
 
-			fmt.Printf("Looking for a rule for %s\n", z)
-
 			// This field _can_ link to another resource
 			if allowedPath, ok := links[z]; ok {
-				fmt.Printf("Found rule: %s\n", allowedPath)
 				if resource, ok := FindLink(index, f.ScalarValue.StringValue, allowedPath); ok {
 					// Avoid self links
 					if resource.Name != root.Name {
-						fmt.Printf("Found a valid link\n")
 						// Substitute in the resource name
 						resolvedPath := strings.Replace(allowedPath, resource.Type, resource.Type+"."+resource.Name, 1)
 						f.Link = resolvedPath
@@ -272,7 +243,6 @@ type ImportedResource struct {
 }
 
 func main() {
-	fmt.Println("Welcome to formation")
 	tfstate := flag.String("tfstate", "", "Path to an existing tfstate file to merge")
 	resourceToImport := flag.String("resource", "", "A specific resource type to import")
 	flag.Parse()
@@ -290,36 +260,7 @@ func main() {
 		importers = map[string]core.Importer{
 			*resourceToImport: importers[*resourceToImport],
 		}
-		fmt.Printf("Importing for resource....\n")
-		spew.Dump(importers)
 	}
-
-	//// TODO(jimmy): Move this into a cached results interface
-	//if *tfstate != "" {
-	//	cachedState := terraform.State{}
-	//	contents, err := ioutil.ReadFile(*tfstate)
-	//	if err != nil {
-	//		panic("Error reading existing TFState file")
-	//	}
-	//
-	//	err = json.Unmarshal(contents, &cachedState);
-	//	if err != nil {
-	//		panic("Error unmarshaling JSON")
-	//	}
-	//
-	//	for instancePath, instance {
-	//
-	//	}
-	//	// Clear any resources being imported, in case we've changed the way
-	//	// their key is constructed
-	//	if *resourceToImport != "" {
-	//		for key, _ := range state.Modules[0].Resources {
-	//			if strings.HasPrefix(key, *resourceToImport) {
-	//				delete(state.Modules[0].Resources, key)
-	//			}
-	//		}
-	//	}
-	//}
 
 	// Configure Terraform Plugin
 	provider := aws2.Provider()
@@ -333,7 +274,7 @@ func main() {
 
 	err := localProvider.Configure(c)
 	if err != nil {
-		fmt.Printf("Error configuring internal provider")
+		panic("Error configuring internal provider")
 	}
 	localSchemaProvider := localProvider.(*schema.Provider)
 
@@ -341,10 +282,8 @@ func main() {
 	provider.Input(&UIInput{}, c)
 	err = provider.Configure(c)
 	if err != nil {
-		fmt.Printf("Error in configuration: %s", err)
+		log.Fatalf("Error while configuring provider %s", err)
 	}
-
-	fmt.Printf("Configuration complete\n")
 
 	// For each importer
 	for resourceType, importer := range importers {
@@ -368,14 +307,13 @@ func main() {
 			}
 
 			if patchyImporter, ok := importer.(core.PatchyImporter); ok {
-				fmt.Printf("*** Applying patchy interface\n")
 				instancesToImport, importViaTerraform, err = patchyImporter.Import(instance, localSchemaProvider.Meta())
 			}
 
 			if importViaTerraform {
 				instancesToImport, err = provider.ImportState(instanceInfo, instance.ID)
 				if err != nil {
-					fmt.Printf("Error importing instances: %s", err)
+					log.Printf("[ERROR] Error importing instance: %s", err)
 					continue
 				}
 			}
@@ -384,32 +322,16 @@ func main() {
 			//instancesToImport[0].Attributes["user_data_base64"] = "sentinal"
 
 			for _, instanceToImport := range instancesToImport {
-				fmt.Printf("Importing this...\n")
 				spew.Dump(instanceToImport)
 
 				instanceState, err := provider.Refresh(instanceInfo, instanceToImport)
 				if err != nil {
-					fmt.Printf("Error refreshing Instance State: %s", err)
-					panic("Error refreshing Instance State")
+					log.Fatal("Error refreshing Instance State")
 				}
-				fmt.Printf("Imported this....\n")
-				spew.Dump(instanceState)
 
 				if patchyImporter, ok := importer.(core.PatchyImporter); ok {
 					instanceState = patchyImporter.Clean(instanceState, localSchemaProvider.Meta())
 				}
-
-				// EC2: Clear our sentinal if not used
-				//if instanceState.Attributes["user_data_base64"] == "sentinal" {
-				//	delete(instanceState.Attributes, "user_data_base64")
-				//}
-
-				// EC2: Clear EBS volumes
-				//for key, _ := range instanceState.Attributes {
-				//	if strings.HasPrefix(key, "ebs_block_device") {
-				//		delete(instanceState.Attributes, key)
-				//	}
-				//}
 
 				// Convert this resource from Terraform's internal format to a Formation Resource
 				parser := core.InstanceStateParser{}
@@ -425,10 +347,6 @@ func main() {
 				}
 				s, _ := provider.GetSchema(request)
 
-				fmt.Printf("FIELDS FIELDS FIELDS\n")
-				for k, v := range instanceState.Attributes {
-					fmt.Printf("\"%s\": \"%s\",\n", k, v)
-				}
 				// Mark computed fields - we don't want to output these
 				MarkComputedFields(resource.Fields, s.ResourceTypes[resourceType])
 
@@ -454,8 +372,7 @@ func main() {
 		defer f.Close()
 
 		if err != nil {
-			fmt.Printf("Error creating file for resource: %s\n", resourceType)
-			return
+			log.Fatalf("Error creating file for resource %s\n", resourceType)
 		}
 
 		for i, importedResource := range resources {
@@ -497,15 +414,13 @@ func main() {
 	if *tfstate != "" {
 		contents, err := ioutil.ReadFile(*tfstate)
 		if err != nil {
-			panic("Error reading existing TFState file")
+			log.Fatal("Error reading existing TFState file")
 		}
 
 		err = json.Unmarshal(contents, &state);
 		if err != nil {
-			panic("Error unmarshaling JSON")
+			log.Fatal("Error unmarshaling JSON")
 		}
-
-		fmt.Printf("Unmarshaled JSON")
 
 		// Clear any resources being imported, in case we've changed the way
 		// their key is constructed
@@ -532,7 +447,7 @@ func main() {
 
 	f, err := os.Create("terraform.tfstate")
 	if err != nil {
-		panic("Failure to create TFState file")
+		log.Fatal("Failure to create TFState file")
 	}
 	defer f.Close()
 

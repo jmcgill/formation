@@ -28,10 +28,10 @@ func (*AwsMainRouteTableAssociationImporter) Describe(meta interface{}) ([]*core
 	if err != nil {
 		return nil, err
 	}
-
 	existingInstances := result.RouteTables // e.g. result.Buckets
+
+	namer := NewTagNamer()
 	instances := make([]*core.Instance, len(existingInstances))
-	names := make(map[string]int)
 	for i, existingInstance := range existingInstances {
 		var associationId *string
 		for _, a := range existingInstance.Associations {
@@ -52,7 +52,7 @@ func (*AwsMainRouteTableAssociationImporter) Describe(meta interface{}) ([]*core
 		}
 		vpc := vpcs.Vpcs[0]
 
-		vpcName := NameTagOrDefault(vpc.Tags, vpc.VpcId, names)
+		vpcName := namer.NameOrDefault(vpc.Tags, vpc.VpcId)
 		instances[i] = &core.Instance{
 			Name: vpcName,
 			ID:   aws.StringValue(associationId),

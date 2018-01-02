@@ -97,18 +97,17 @@ Great! We’ve found all the Internet Gateways in this account - now we need to 
 We store the ID and Name in a `core.Instance`  struct and return an array of these from the Describe method.
 
 
-    names := make(map[string]int)
+    namer := NewTagNamer()
     instances := make([]*core.Instance, len(existingInstances))
     for i, existingInstance := range existingInstances {
-       gatewayId := existingInstance.InternetGatewayId
-       name := NameTagOrDefault(existingInstance.Tags, gatewayId, names)
-       instances[i] = &core.Instance{
-          Name: name,
-          ID:   aws.StringValue(existingInstance.InternetGatewayId),
-       }
+        gatewayId := existingInstance.InternetGatewayId
+        instances[i] = &core.Instance{
+            Name: namer.NameOrDefault(existingInstance.Tags, gatewayId),
+            ID:   aws.StringValue(existingInstance.InternetGatewayId),
+        }
     }
 
-     return instances, nil
+    return instances, nil
 
 There’s two interesting things worth paying attention to in this code
 
@@ -116,7 +115,7 @@ There’s two interesting things worth paying attention to in this code
 1. AWS returns pointers to strings from all API calls. The `aws.StringValue` method is some nice syntactic sugar which safely dereferences those strings.
 
 
-2. The `NameTagOrDefault` method is a helper function to extract the name of this resource from the Name Tag if it exists. The map passed into this helper function is used to ensure that each name is unique, since Tags do not have a uniqueness guarantee. If no Name Tag is present, the (much less human readable) InternetGatewayId is used instead.
+2. The `TagNamer` struct provides a helper function (`NameOrDefault`) to extract the name of this resource from the Name Tag if it exists. The map passed into this helper function is used to ensure that each name is unique, since Tags do not have a uniqueness guarantee. If no Name Tag is present, the (much less human readable) InternetGatewayId is used instead.
 
 **Declare valid references**
 

@@ -165,7 +165,6 @@ func (p *Printer) Print(resource *Resource) string {
 	return buf.String()
 }
 
-// HACK - pass an io.Writer in always, convert tests to handle this
 func (p *Printer) PrintToFile(file *os.File, resource *Resource) {
 	writer := io.Writer(file)
 	p.output = &writer

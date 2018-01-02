@@ -26,11 +26,11 @@ func (*AwsNatGatewayImporter) Describe(meta interface{}) ([]*core.Instance, erro
 		return nil, err
 	}
 
+	namer := NewTagNamer()
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
-		gatewayId := aws.StringValue(existingInstance.NatGatewayId)
 		instances[i] = &core.Instance{
-			Name: core.Format(TagOrDefault(existingInstance.Tags, "Name", gatewayId)),
+			Name: namer.NameOrDefault(existingInstance.Tags, existingInstance.NatGatewayId),
 			ID:   aws.StringValue(existingInstance.NatGatewayId),
 		}
 	}

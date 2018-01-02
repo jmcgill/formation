@@ -17,13 +17,13 @@ func (*AwsCustomerGatewayImporter) Describe(meta interface{}) ([]*core.Instance,
 	if err != nil {
 	  return nil, err
 	}
-
-    names := make(map[string]int)
 	existingInstances := result.CustomerGateways
+
+    namer := NewTagNamer()
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
 		instances[i] = &core.Instance{
-			Name: NameTagOrDefault(existingInstance.Tags, existingInstance.CustomerGatewayId, names),
+			Name: namer.NameOrDefault(existingInstance.Tags, existingInstance.CustomerGatewayId),
 			ID:   aws.StringValue(existingInstance.CustomerGatewayId),
 		}
 	}

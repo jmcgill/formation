@@ -6,46 +6,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/hashicorp/terraform/terraform"
 	"strings"
-	"strconv"
 )
 
 type AwsInstanceImporter struct {
-}
-
-func GetTag(tags []*ec2.Tag, key string) *ec2.Tag {
-	for _, t := range tags {
-		if aws.StringValue(t.Key) == key {
-			return t
-		}
-	}
-	return nil
-}
-
-func TagOrDefault(tags []*ec2.Tag, key string, otherwise string) string {
-	for _, t := range tags {
-		if aws.StringValue(t.Key) == key {
-			return aws.StringValue(t.Value)
-		}
-	}
-	return otherwise
-}
-
-func NameTagOrDefault(tags []*ec2.Tag, otherwise *string, existingNames map[string]int ) string {
-	name := aws.StringValue(otherwise)
-	for _, t := range tags {
-		if aws.StringValue(t.Key) == "Name" {
-			name = aws.StringValue(t.Value)
-		}
-	}
-
-	if _, ok := existingNames[name]; ok {
-		existingNames[name] += 1
-		name = name + "-" + strconv.Itoa(existingNames[name])
-	} else {
-		existingNames[name] = 1
-	}
-
-	return core.Format(name)
 }
 
 // Lists all resources of this type
@@ -66,12 +29,11 @@ func (*AwsInstanceImporter) Describe(meta interface{}) ([]*core.Instance, error)
 		return nil, err
 	}
 
-	names := make(map[string]int)
+	namer := NewTagNamer()
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
-		name := NameTagOrDefault(existingInstance.Tags, existingInstance.InstanceId, names)
 		instances[i] = &core.Instance{
-			Name: name,
+			Name: namer.NameOrDefault(existingInstance.Tags, existingInstance.InstanceId),
 			ID:   aws.StringValue(existingInstance.InstanceId),
 		}
 	}

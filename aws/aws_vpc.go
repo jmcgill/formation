@@ -16,13 +16,13 @@ func (*AwsVpcImporter) Describe(meta interface{}) ([]*core.Instance, error) {
 	if err != nil {
 	  return nil, err
 	}
-
     existingInstances := result.Vpcs
+
+    namer := NewTagNamer()
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
-		vpcId := aws.StringValue(existingInstance.VpcId)
 		instances[i] = &core.Instance{
-			Name: core.Format(TagOrDefault(existingInstance.Tags, "Name", vpcId)),
+			Name: namer.NameOrDefault(existingInstance.Tags, existingInstance.VpcId),
 			ID:   aws.StringValue(existingInstance.VpcId),
 		}
 	}

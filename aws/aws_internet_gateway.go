@@ -17,20 +17,19 @@ func (*AwsInternetGatewayImporter) Describe(meta interface{}) ([]*core.Instance,
 	if err != nil {
 	  return nil, err
 	}
+	existingInstances := result.InternetGateways
 
-    existingInstances := result.InternetGateways
-	names := make(map[string]int)
+	namer := NewTagNamer()
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
 		gatewayId := existingInstance.InternetGatewayId
-		name := NameTagOrDefault(existingInstance.Tags, gatewayId, names)
 		instances[i] = &core.Instance{
-			Name: name,
+			Name: namer.NameOrDefault(existingInstance.Tags, gatewayId),
 			ID:   aws.StringValue(existingInstance.InternetGatewayId),
 		}
 	}
 
-	 return instances, nil
+	return instances, nil
 }
 
 // Describes which other resources this resource can reference
