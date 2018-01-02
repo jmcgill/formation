@@ -13,8 +13,6 @@ odd) design choices in order to preserve this compatibility.
 
 # Current State
 
-Formation is currently a proof of concept. The core logic is correct, but in need of some serious refactoring.
-
 Formation can import a limited subset of resources. See [importers.go](https://github.com/jmcgill/formation/blob/master/aws/importers.go) for a list of resources that are supported.
 
 # Known Weirdness
@@ -43,8 +41,4 @@ implement it.
 # Design Document
 
 See [DESIGNDOC.md](https://github.com/jmcgill/formation/blob/master/DESIGNDOC.md)
-
-# Status
-
-Still working on the core framework - so don't expect this to do anything yet!
 
