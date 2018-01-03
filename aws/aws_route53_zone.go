@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsRoute53ZoneImporter struct {
@@ -11,7 +11,7 @@ type AwsRoute53ZoneImporter struct {
 
 // Lists all resources of this type
 func (*AwsRoute53ZoneImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).r53conn
+	svc := meta.(*AWSClient).r53conn
 
 	// Add code to list resources here
 	existingInstances := make([]*route53.HostedZone, 0)
@@ -39,6 +39,5 @@ func (*AwsRoute53ZoneImporter) Describe(meta interface{}) ([]*core.Instance, err
 
 // Describes which other resources this resource can reference
 func (*AwsRoute53ZoneImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }
