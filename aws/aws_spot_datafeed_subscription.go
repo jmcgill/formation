@@ -19,7 +19,7 @@ func (*AwsSpotDatafeedSubscriptionImporter) Describe(meta interface{}) ([]*core.
 	//  return nil, err
 	//}
 
-    //existingInstances := ... // e.g. result.Buckets
+	//existingInstances := ... // e.g. result.Buckets
 	//instances := make([]*core.Instance, len(existingInstances))
 	//for i, existingInstance := range existingInstances {
 	//	instances[i] = &core.Instance{
@@ -33,6 +33,5 @@ func (*AwsSpotDatafeedSubscriptionImporter) Describe(meta interface{}) ([]*core.
 
 // Describes which other resources this resource can reference
 func (*AwsSpotDatafeedSubscriptionImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

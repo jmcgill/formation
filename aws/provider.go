@@ -1,14 +1,14 @@
 package aws
 
 import (
-"bytes"
-"fmt"
-"log"
+	"bytes"
+	"fmt"
+	"log"
 
-"github.com/hashicorp/terraform/helper/hashcode"
-"github.com/hashicorp/terraform/helper/mutexkv"
-"github.com/hashicorp/terraform/helper/schema"
-"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform/helper/hashcode"
+	"github.com/hashicorp/terraform/helper/mutexkv"
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 // Provider returns a terraform.ResourceProvider.
@@ -158,11 +158,9 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 
-		DataSourcesMap: map[string]*schema.Resource{
-		},
+		DataSourcesMap: map[string]*schema.Resource{},
 
-		ResourcesMap: map[string]*schema.Resource{
-		},
+		ResourcesMap:  map[string]*schema.Resource{},
 		ConfigureFunc: providerConfigure,
 	}
 }

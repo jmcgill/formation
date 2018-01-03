@@ -1,10 +1,10 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsMainRouteTableAssociationImporter struct {
@@ -12,12 +12,12 @@ type AwsMainRouteTableAssociationImporter struct {
 
 // Find the main route table association for each VPC
 func (*AwsMainRouteTableAssociationImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).ec2conn
+	svc := meta.(*AWSClient).ec2conn
 
 	input := &ec2.DescribeRouteTablesInput{
 		Filters: []*ec2.Filter{
 			{
-				Name:   aws.String("association.main"),
+				Name: aws.String("association.main"),
 				Values: []*string{
 					aws.String("true"),
 				},
@@ -42,7 +42,7 @@ func (*AwsMainRouteTableAssociationImporter) Describe(meta interface{}) ([]*core
 
 		// Fetch the VPC to get a better name for this association
 		input := ec2.DescribeVpcsInput{
-			VpcIds: []*string {
+			VpcIds: []*string{
 				existingInstance.VpcId,
 			},
 		}
@@ -57,7 +57,7 @@ func (*AwsMainRouteTableAssociationImporter) Describe(meta interface{}) ([]*core
 			Name: vpcName,
 			ID:   aws.StringValue(associationId),
 			CompositeID: map[string]string{
-				"vpc_id": aws.StringValue(existingInstance.VpcId),
+				"vpc_id":         aws.StringValue(existingInstance.VpcId),
 				"route_table_id": aws.StringValue(existingInstance.RouteTableId),
 			},
 		}
@@ -69,8 +69,8 @@ func (*AwsMainRouteTableAssociationImporter) Describe(meta interface{}) ([]*core
 func (*AwsMainRouteTableAssociationImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	state := &terraform.InstanceState{
 		ID: in.ID,
-		Attributes: map[string]string {
-			"vpc_id": in.CompositeID["vpc_id"],
+		Attributes: map[string]string{
+			"vpc_id":         in.CompositeID["vpc_id"],
 			"route_table_id": in.CompositeID["route_table_id"],
 		},
 	}
@@ -79,14 +79,14 @@ func (*AwsMainRouteTableAssociationImporter) Import(in *core.Instance, meta inte
 	}, false, nil
 }
 
-func (*AwsMainRouteTableAssociationImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+func (*AwsMainRouteTableAssociationImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
 	return in
 }
 
 // Describes which other resources this resource can reference
 func (*AwsMainRouteTableAssociationImporter) Links() map[string]string {
 	return map[string]string{
-		"vpc_id": "aws_vpc.id",
+		"vpc_id":         "aws_vpc.id",
 		"route_table_id": "aws_route_table.id",
 	}
 }

@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsNatGatewayImporter struct {
@@ -11,7 +11,7 @@ type AwsNatGatewayImporter struct {
 
 // Lists all resources of this type
 func (*AwsNatGatewayImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).ec2conn
+	svc := meta.(*AWSClient).ec2conn
 
 	// Add code to list resources here
 	existingInstances := make([]*ec2.NatGateway, 0)
@@ -42,6 +42,6 @@ func (*AwsNatGatewayImporter) Describe(meta interface{}) ([]*core.Instance, erro
 func (*AwsNatGatewayImporter) Links() map[string]string {
 	return map[string]string{
 		"allocation_id": "aws_eip.id",
-		"subnet_id": "aws_subnet.id",
+		"subnet_id":     "aws_subnet.id",
 	}
 }

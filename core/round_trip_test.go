@@ -311,11 +311,11 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		// S3 objects have deeply nested lists
 		state := terraform.InstanceState{
 			Attributes: map[string]string{
-				"tags.%": "2",
-				"tags.Environment": "prod",
-				"tags.Stack-Id": "Stack-Id",
-				"versioning.#": "1",
-				"versioning.0.enabled": "false",
+				"tags.%":                  "2",
+				"tags.Environment":        "prod",
+				"tags.Stack-Id":           "Stack-Id",
+				"versioning.#":            "1",
+				"versioning.0.enabled":    "false",
 				"versioning.0.mfa_delete": "false",
 			},
 		}
@@ -344,7 +344,7 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		// S3 objects have deeply nested lists
 		state := terraform.InstanceState{
 			Attributes: map[string]string{
-				"tags.%": "2",
+				"tags.%":           "2",
 				"tags.Environment": "prod",
 				"tags.I.Have.Dots": "Hello",
 			},
@@ -369,12 +369,12 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		// S3 objects have deeply nested lists
 		state := terraform.InstanceState{
 			Attributes: map[string]string{
-				"ingress.2541437006.cidr_blocks.#": "1",
-				"ingress.2541437006.protocol": "tcp",
-				"ingress.2541437006.cidr_blocks.0": "0.0.0.0/0",
-				"ingress.#": "1",
+				"ingress.2541437006.cidr_blocks.#":      "1",
+				"ingress.2541437006.protocol":           "tcp",
+				"ingress.2541437006.cidr_blocks.0":      "0.0.0.0/0",
+				"ingress.#":                             "1",
 				"ingress.2541437006.ipv6_cidr_blocks.#": "0",
-				"ingress.2541437006.security_groups.#": "0",
+				"ingress.2541437006.security_groups.#":  "0",
 			},
 		}
 
@@ -400,7 +400,7 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 			Attributes: map[string]string{
 				"item.1.name": "James",
 				"item.2.name": "Sophie",
-				"item.#": "2",
+				"item.#":      "2",
 			},
 		}
 
@@ -427,10 +427,10 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		state := terraform.InstanceState{
 			Attributes: map[string]string{
 				"egress.3198106456.security_groups.303881662": "sg-abc",
-				"egress.3198106456.security_groups.#": "1",
-				"egress.306721562.security_groups.303881662": "sg-def",
-				"egress.306721562.security_groups.#": "1",
-				"egress.#": "2",
+				"egress.3198106456.security_groups.#":         "1",
+				"egress.306721562.security_groups.303881662":  "sg-def",
+				"egress.306721562.security_groups.#":          "1",
+				"egress.#":                                    "2",
 			},
 		}
 
@@ -458,10 +458,10 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 		// S3 objects have deeply nested lists
 		state := terraform.InstanceState{
 			Attributes: map[string]string{
-				"ingress.#": "1",
-				"ingress.108330761.cidr_blocks.#": "19",
-				"ingress.108330761.cidr_blocks.0": "52.6.1.1/32",
-				"ingress.108330761.cidr_blocks.1": "208.82.15.122/32",
+				"ingress.#":                        "1",
+				"ingress.108330761.cidr_blocks.#":  "19",
+				"ingress.108330761.cidr_blocks.0":  "52.6.1.1/32",
+				"ingress.108330761.cidr_blocks.1":  "208.82.15.122/32",
 				"ingress.108330761.cidr_blocks.10": "10.30.0.0/15",
 				"ingress.108330761.cidr_blocks.11": "76.175.104.150/32",
 				"ingress.108330761.cidr_blocks.12": "54.68.30.98/32",
@@ -471,15 +471,15 @@ var _ = Describe("RoundTripInstanceStateToHCL", func() {
 				"ingress.108330761.cidr_blocks.16": "73.222.147.41/32",
 				"ingress.108330761.cidr_blocks.17": "24.5.151.60/32",
 				"ingress.108330761.cidr_blocks.18": "24.5.150.186/32",
-				"ingress.108330761.cidr_blocks.2": "10.20.0.0/16",
-				"ingress.108330761.cidr_blocks.3": "104.7.13.39/32",
-				"ingress.108330761.cidr_blocks.4": "209.122.233.114/32",
-				"ingress.108330761.cidr_blocks.5": "172.56.38.153/32",
-				"ingress.108330761.cidr_blocks.6": "47.208.191.203/32",
-				"ingress.108330761.cidr_blocks.7": "73.70.34.243/32",
-				"ingress.108330761.cidr_blocks.8": "69.127.178.225/32",
-				"ingress.108330761.cidr_blocks.9": "66.65.93.66/32",
-				"ingress.108330761.description": "hello",
+				"ingress.108330761.cidr_blocks.2":  "10.20.0.0/16",
+				"ingress.108330761.cidr_blocks.3":  "104.7.13.39/32",
+				"ingress.108330761.cidr_blocks.4":  "209.122.233.114/32",
+				"ingress.108330761.cidr_blocks.5":  "172.56.38.153/32",
+				"ingress.108330761.cidr_blocks.6":  "47.208.191.203/32",
+				"ingress.108330761.cidr_blocks.7":  "73.70.34.243/32",
+				"ingress.108330761.cidr_blocks.8":  "69.127.178.225/32",
+				"ingress.108330761.cidr_blocks.9":  "66.65.93.66/32",
+				"ingress.108330761.description":    "hello",
 			},
 		}
 

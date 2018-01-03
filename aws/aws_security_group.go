@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsSecurityGroupImporter struct {
@@ -11,13 +11,13 @@ type AwsSecurityGroupImporter struct {
 
 // Lists all resources of this type
 func (*AwsSecurityGroupImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).ec2conn
+	svc := meta.(*AWSClient).ec2conn
 
 	// TODO(jimmy): Fold these into one
 	securityGroups := make([]*ec2.SecurityGroup, 0)
 	result, err := svc.DescribeSecurityGroups(nil)
 	if err != nil {
-	  return nil, err
+		return nil, err
 	}
 	securityGroups = append(securityGroups, result.SecurityGroups...)
 
@@ -31,9 +31,9 @@ func (*AwsSecurityGroupImporter) Describe(meta interface{}) ([]*core.Instance, e
 		}
 		securityGroups = append(securityGroups, result.SecurityGroups...)
 	}
-    existingInstances := securityGroups
+	existingInstances := securityGroups
 
-    namer := NewTagNamer()
+	namer := NewTagNamer()
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
 		instances[i] = &core.Instance{
@@ -48,8 +48,8 @@ func (*AwsSecurityGroupImporter) Describe(meta interface{}) ([]*core.Instance, e
 // Describes which other resources this resource can reference
 func (*AwsSecurityGroupImporter) Links() map[string]string {
 	return map[string]string{
-		"vpc_id": "aws_vpc.id",
+		"vpc_id":                  "aws_vpc.id",
 		"ingress.security_groups": "aws_security_group.id",
-		"egress.security_groups": "aws_security_group.id",
+		"egress.security_groups":  "aws_security_group.id",
 	}
 }

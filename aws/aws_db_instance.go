@@ -19,7 +19,7 @@ func (*AwsDbInstanceImporter) Describe(meta interface{}) ([]*core.Instance, erro
 	//  return nil, err
 	//}
 
-    //existingInstances := ... // e.g. result.Buckets
+	//existingInstances := ... // e.g. result.Buckets
 	//instances := make([]*core.Instance, len(existingInstances))
 	//for i, existingInstance := range existingInstances {
 	//	instances[i] = &core.Instance{
@@ -33,6 +33,5 @@ func (*AwsDbInstanceImporter) Describe(meta interface{}) ([]*core.Instance, erro
 
 // Describes which other resources this resource can reference
 func (*AwsDbInstanceImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

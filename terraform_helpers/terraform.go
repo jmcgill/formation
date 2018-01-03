@@ -6,8 +6,8 @@ import (
 	"sort"
 
 	"github.com/hashicorp/terraform/terraform"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 type InstanceState terraform.InstanceState
@@ -32,7 +32,7 @@ func isNumeric(in string) bool {
 }
 
 func asInteger(in string) int {
-	v, _ := strconv.Atoi(in);
+	v, _ := strconv.Atoi(in)
 	return v
 }
 

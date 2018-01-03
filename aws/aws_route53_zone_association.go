@@ -1,11 +1,11 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/hashicorp/terraform/terraform"
-	"fmt"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsRoute53ZoneAssociationImporter struct {
@@ -13,7 +13,7 @@ type AwsRoute53ZoneAssociationImporter struct {
 
 // Lists all resources of this type
 func (*AwsRoute53ZoneAssociationImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).r53conn
+	svc := meta.(*AWSClient).r53conn
 
 	// List hosted zones
 	zones := make([]*route53.HostedZone, 0)
@@ -53,9 +53,8 @@ func (*AwsRoute53ZoneAssociationImporter) Describe(meta interface{}) ([]*core.In
 
 func (*AwsRoute53ZoneAssociationImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	state := &terraform.InstanceState{
-		ID: in.ID,
-		Attributes: map[string]string{
-		},
+		ID:         in.ID,
+		Attributes: map[string]string{},
 	}
 	return []*terraform.InstanceState{
 		state,
@@ -70,6 +69,6 @@ func (*AwsRoute53ZoneAssociationImporter) Clean(in *terraform.InstanceState, met
 func (*AwsRoute53ZoneAssociationImporter) Links() map[string]string {
 	return map[string]string{
 		"zone_id": "aws_route53_zone.zone_id",
-		"vpc_id": "aws_vpc.id",
+		"vpc_id":  "aws_vpc.id",
 	}
 }

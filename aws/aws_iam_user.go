@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamUserImporter struct {
@@ -11,7 +11,7 @@ type AwsIamUserImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamUserImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	// Add code to list resources here
 	existingInstances := make([]*iam.User, 0)
@@ -39,6 +39,5 @@ func (*AwsIamUserImporter) Describe(meta interface{}) ([]*core.Instance, error) 
 
 // Describes which other resources this resource can reference
 func (*AwsIamUserImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

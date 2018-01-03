@@ -2,17 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"strconv"
-	"flag"
-	"io/ioutil"
 
 	"github.com/jmcgill/formation/aws"
 	"github.com/jmcgill/formation/core"
 	"os"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform/config/configschema"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
@@ -107,8 +108,8 @@ func DecorateWithDefaultFields(instanceState *terraform.InstanceState, r *core.I
 
 		field := &core.Field{
 			FieldType: core.SCALAR,
-			Path: instancePath,
-			Key:     key,
+			Path:      instancePath,
+			Key:       key,
 			ScalarValue: &core.ScalarValue{
 				StringValue: defaultValue,
 				IsBool:      isBool,
@@ -172,7 +173,7 @@ func IndexFields(resource *core.Resource, r *core.InlineResource, index FieldInd
 	}
 }
 
-func  FindLink(index FieldIndex, value string, allowedPath string) (*core.Resource, bool) {
+func FindLink(index FieldIndex, value string, allowedPath string) (*core.Resource, bool) {
 	if fields, ok := index[value]; ok {
 		for _, field := range fields {
 			if field.path == allowedPath {
@@ -184,12 +185,12 @@ func  FindLink(index FieldIndex, value string, allowedPath string) (*core.Resour
 	return nil, false
 }
 
-func LinkFields(root* core.Resource, r *core.InlineResource, links map[string]string, index FieldIndex) *core.InlineResource {
+func LinkFields(root *core.Resource, r *core.InlineResource, links map[string]string, index FieldIndex) *core.InlineResource {
 	RecursivelyLinkFields(root, r, links, index, "")
 	return r
 }
 
-func RecursivelyLinkFields(root* core.Resource, r *core.InlineResource, links map[string]string, index FieldIndex, path string) {
+func RecursivelyLinkFields(root *core.Resource, r *core.InlineResource, links map[string]string, index FieldIndex, path string) {
 	for _, f := range r.Fields {
 		// This is a scalar object
 		if f.FieldType == core.SCALAR {
@@ -238,7 +239,7 @@ func RecursivelyLinkFields(root* core.Resource, r *core.InlineResource, links ma
 
 type ImportedResource struct {
 	resource *core.Resource
-	state *terraform.InstanceState
+	state    *terraform.InstanceState
 }
 
 func main() {
@@ -316,13 +317,10 @@ func main() {
 				}
 			}
 
-			// TODO(jimmy): EC2: Add an Import function for when things don't quite go right. Could source UserData there.
-			//instancesToImport[0].Attributes["user_data_base64"] = "sentinal"
-
 			for _, instanceToImport := range instancesToImport {
 				instanceState, err := provider.Refresh(instanceInfo, instanceToImport)
 				if err != nil {
-					log.Fatal("Error refreshing Instance State")
+					log.Fatalf("Error refreshing Instance State %s", instanceToImport)
 				}
 
 				if patchyImporter, ok := importer.(core.PatchyImporter); ok {
@@ -341,6 +339,7 @@ func main() {
 				request := &terraform.ProviderSchemaRequest{
 					ResourceTypes: []string{resourceType},
 				}
+				spew.Dump(request)
 				s, _ := provider.GetSchema(request)
 
 				// Mark computed fields - we don't want to output these
@@ -413,7 +412,7 @@ func main() {
 			log.Fatal("Error reading existing TFState file")
 		}
 
-		err = json.Unmarshal(contents, &state);
+		err = json.Unmarshal(contents, &state)
 		if err != nil {
 			log.Fatal("Error unmarshaling JSON")
 		}
@@ -433,8 +432,8 @@ func main() {
 		for _, importedResource := range resources {
 			resource := importedResource.resource
 			r := &terraform.ResourceState{
-				Type:    resource.Type,
-				Primary: importedResource.state,
+				Type:     resource.Type,
+				Primary:  importedResource.state,
 				Provider: "provider.aws",
 			}
 			state.Modules[0].Resources[resource.Type+"."+resource.Name] = r

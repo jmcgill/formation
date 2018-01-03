@@ -2,9 +2,9 @@ package terraform_helpers_test
 
 import (
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/terraform_helpers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/jmcgill/formation/terraform_helpers"
 )
 
 var _ = Describe("Terraform Helpers", func() {

@@ -120,7 +120,6 @@ func (p *Printer) printField(field *Field) {
 				p.write("%s = \"%s\"\n", field.Key, strings.Replace(field.ScalarValue.StringValue, "\"", "\\\"", -1))
 			}
 
-
 		}
 	} else if field.FieldType == MAP {
 		p.printMap(field.Key, field.NestedValue)

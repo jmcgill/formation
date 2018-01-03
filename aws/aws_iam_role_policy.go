@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamRolePolicyImporter struct {
@@ -11,7 +11,7 @@ type AwsIamRolePolicyImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamRolePolicyImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	// List all roles
 	roles := make([]*iam.Role, 0)
@@ -38,7 +38,7 @@ func (*AwsIamRolePolicyImporter) Describe(meta interface{}) ([]*core.Instance, e
 				id := aws.StringValue(role.RoleName) + ":" + aws.StringValue(i)
 				instance := &core.Instance{
 					Name: core.Format(id),
-					ID: id,
+					ID:   id,
 				}
 				instances = append(instances, instance)
 			}

@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamInstanceProfileImporter struct {
@@ -11,7 +11,7 @@ type AwsIamInstanceProfileImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamInstanceProfileImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	existingInstances := make([]*iam.InstanceProfile, 0)
 	err := svc.ListInstanceProfilesPages(nil, func(o *iam.ListInstanceProfilesOutput, lastPage bool) bool {

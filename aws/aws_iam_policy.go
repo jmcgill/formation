@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamPolicyImporter struct {
@@ -11,7 +11,7 @@ type AwsIamPolicyImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamPolicyImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	// Add code to list resources here
 	existingInstances := make([]*iam.Policy, 0)
@@ -43,6 +43,5 @@ func (*AwsIamPolicyImporter) Describe(meta interface{}) ([]*core.Instance, error
 
 // Describes which other resources this resource can reference
 func (*AwsIamPolicyImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

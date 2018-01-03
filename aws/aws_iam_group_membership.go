@@ -1,10 +1,10 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamGroupMembershipImporter struct {
@@ -12,7 +12,7 @@ type AwsIamGroupMembershipImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamGroupMembershipImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	// Add code to list resources here
 	existingInstances := make([]*iam.Group, 0)
@@ -38,13 +38,12 @@ func (*AwsIamGroupMembershipImporter) Describe(meta interface{}) ([]*core.Instan
 	return instances, nil
 }
 
-
 func (*AwsIamGroupMembershipImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	state := &terraform.InstanceState{
 		ID: in.ID,
-		Attributes: map[string]string {
+		Attributes: map[string]string{
 			"group": in.ID,
-			"name": in.Name,
+			"name":  in.Name,
 		},
 	}
 	return []*terraform.InstanceState{
@@ -52,7 +51,7 @@ func (*AwsIamGroupMembershipImporter) Import(in *core.Instance, meta interface{}
 	}, false, nil
 }
 
-func (*AwsIamGroupMembershipImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+func (*AwsIamGroupMembershipImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
 	return in
 }
 

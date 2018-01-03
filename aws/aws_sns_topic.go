@@ -1,8 +1,10 @@
 package aws
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/jmcgill/formation/core"
-	//"github.com/aws/aws-sdk-go/aws"
+	"strings"
 )
 
 type AwsSnsTopicImporter struct {
@@ -10,29 +12,34 @@ type AwsSnsTopicImporter struct {
 
 // Lists all resources of this type
 func (*AwsSnsTopicImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	return nil, nil
-	//svc :=  meta.(*AWSClient).snsconn
+	svc := meta.(*AWSClient).snsconn
 
 	// Add code to list resources here
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//  return nil, err
-	//}
+	existingInstances := make([]*sns.Topic, 0)
+	err := svc.ListTopicsPages(nil, func(o *sns.ListTopicsOutput, lastPage bool) bool {
+		for _, i := range o.Topics {
+			existingInstances = append(existingInstances, i)
+		}
+		return true
+	})
 
-    //existingInstances := ... // e.g. result.Buckets
-	//instances := make([]*core.Instance, len(existingInstances))
-	//for i, existingInstance := range existingInstances {
-	//	instances[i] = &core.Instance{
-	//		Name: strings.Replace(aws.StringValue(existingInstance.Name), "-", "_", -1),
-	//		ID:   aws.StringValue(existingInstance.Name),
-	//	}
-	//}
+	if err != nil {
+		return nil, err
+	}
 
-	// return instances, nil
+	instances := make([]*core.Instance, len(existingInstances))
+	for i, existingInstance := range existingInstances {
+		p := strings.Split(aws.StringValue(existingInstance.TopicArn), ":")
+		instances[i] = &core.Instance{
+			Name: core.Format(p[len(p)-1]),
+			ID:   aws.StringValue(existingInstance.TopicArn),
+		}
+	}
+
+	return instances, nil
 }
 
 // Describes which other resources this resource can reference
 func (*AwsSnsTopicImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

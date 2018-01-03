@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamGroupImporter struct {
@@ -11,7 +11,7 @@ type AwsIamGroupImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamGroupImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	existingInstances := make([]*iam.Group, 0)
 	err := svc.ListGroupsPages(nil, func(o *iam.ListGroupsOutput, lastPage bool) bool {
@@ -38,6 +38,5 @@ func (*AwsIamGroupImporter) Describe(meta interface{}) ([]*core.Instance, error)
 
 // Describes which other resources this resource can reference
 func (*AwsIamGroupImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

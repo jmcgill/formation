@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsEbsVolumeImporter struct {
@@ -11,7 +11,7 @@ type AwsEbsVolumeImporter struct {
 
 // Lists all resources of this type
 func (*AwsEbsVolumeImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).ec2conn
+	svc := meta.(*AWSClient).ec2conn
 
 	// Add code to list resources here
 	existingInstances := make([]*ec2.Volume, 0)
@@ -42,6 +42,6 @@ func (*AwsEbsVolumeImporter) Describe(meta interface{}) ([]*core.Instance, error
 func (*AwsEbsVolumeImporter) Links() map[string]string {
 	return map[string]string{
 		"snapshot_id": "aws_ebs_snapshot.id",
-		"kms_key_id": "aws_kms_key.id",
+		"kms_key_id":  "aws_kms_key.id",
 	}
 }

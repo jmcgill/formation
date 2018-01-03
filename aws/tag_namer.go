@@ -1,10 +1,10 @@
 package aws
 
 import (
-	"strconv"
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/jmcgill/formation/core"
+	"strconv"
 )
 
 type tagNamer struct {

@@ -1,10 +1,10 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamUserSshKeyImporter struct {
@@ -12,7 +12,7 @@ type AwsIamUserSshKeyImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamUserSshKeyImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	// Add code to list resources here
 	existingInstances := make([]*iam.SSHPublicKeyMetadata, 0)
@@ -33,7 +33,7 @@ func (*AwsIamUserSshKeyImporter) Describe(meta interface{}) ([]*core.Instance, e
 			Name: core.Format(aws.StringValue(existingInstance.UserName)),
 			ID:   aws.StringValue(existingInstance.UserName),
 			CompositeID: map[string]string{
-				"key_id": aws.StringValue(existingInstance.SSHPublicKeyId),
+				"key_id":    aws.StringValue(existingInstance.SSHPublicKeyId),
 				"user_name": aws.StringValue(existingInstance.UserName),
 			},
 		}
@@ -45,7 +45,7 @@ func (*AwsIamUserSshKeyImporter) Describe(meta interface{}) ([]*core.Instance, e
 func (*AwsIamUserSshKeyImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	state := &terraform.InstanceState{
 		ID: in.CompositeID["key_id"],
-		Attributes: map[string]string {
+		Attributes: map[string]string{
 			"username": in.CompositeID["user_name"],
 			"encoding": "SSH",
 		},
@@ -56,12 +56,11 @@ func (*AwsIamUserSshKeyImporter) Import(in *core.Instance, meta interface{}) ([]
 	}, false, nil
 }
 
-func (*AwsIamUserSshKeyImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+func (*AwsIamUserSshKeyImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
 	return in
 }
 
 // Describes which other resources this resource can reference
 func (*AwsIamUserSshKeyImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

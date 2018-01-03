@@ -1,11 +1,10 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/hashicorp/terraform/terraform"
-	"fmt"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsVolumeAttachmentImporter struct {
@@ -13,7 +12,7 @@ type AwsVolumeAttachmentImporter struct {
 
 // Lists all resources of this type
 func (*AwsVolumeAttachmentImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).ec2conn
+	svc := meta.(*AWSClient).ec2conn
 
 	// Add code to list resources here
 	existingInstances := make([]*ec2.Volume, 0)
@@ -35,9 +34,9 @@ func (*AwsVolumeAttachmentImporter) Describe(meta interface{}) ([]*core.Instance
 
 			instances = append(instances, &core.Instance{
 				Name: core.Format(name),
-				ID: aws.StringValue(attachment.VolumeId),
-				CompositeID: map[string]string {
-					"volume_id": aws.StringValue(attachment.VolumeId),
+				ID:   aws.StringValue(attachment.VolumeId),
+				CompositeID: map[string]string{
+					"volume_id":   aws.StringValue(attachment.VolumeId),
 					"device_name": aws.StringValue(attachment.Device),
 					"instance_id": aws.StringValue(attachment.InstanceId),
 				},
@@ -51,20 +50,19 @@ func (*AwsVolumeAttachmentImporter) Describe(meta interface{}) ([]*core.Instance
 func (*AwsVolumeAttachmentImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	state := &terraform.InstanceState{
 		ID: in.CompositeID["volume_id"],
-		Attributes: map[string]string {
-			"volume_id": in.CompositeID["volume_id"],
+		Attributes: map[string]string{
+			"volume_id":   in.CompositeID["volume_id"],
 			"device_name": in.CompositeID["device_name"],
 			"instance_id": in.CompositeID["instance_id"],
 		},
 	}
 
-	fmt.Printf("**** IMPORTING VOLUME ATTACHMENTS")
 	return []*terraform.InstanceState{
 		state,
 	}, false, nil
 }
 
-func (*AwsVolumeAttachmentImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+func (*AwsVolumeAttachmentImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
 	return in
 }
 
@@ -72,6 +70,6 @@ func (*AwsVolumeAttachmentImporter) Clean(in *terraform.InstanceState, meta inte
 func (*AwsVolumeAttachmentImporter) Links() map[string]string {
 	return map[string]string{
 		"instance_id": "aws_instance.id",
-		"volume_id": "aws_ebs_volume.id",
+		"volume_id":   "aws_ebs_volume.id",
 	}
 }

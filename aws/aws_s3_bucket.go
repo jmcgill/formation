@@ -1,8 +1,8 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsS3BucketImporter struct {

@@ -19,7 +19,7 @@ func (*AwsElasticacheClusterImporter) Describe(meta interface{}) ([]*core.Instan
 	//  return nil, err
 	//}
 
-    //existingInstances := ... // e.g. result.Buckets
+	//existingInstances := ... // e.g. result.Buckets
 	//instances := make([]*core.Instance, len(existingInstances))
 	//for i, existingInstance := range existingInstances {
 	//	instances[i] = &core.Instance{
@@ -33,6 +33,5 @@ func (*AwsElasticacheClusterImporter) Describe(meta interface{}) ([]*core.Instan
 
 // Describes which other resources this resource can reference
 func (*AwsElasticacheClusterImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

@@ -1,8 +1,8 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsVpcImporter struct {
@@ -10,15 +10,15 @@ type AwsVpcImporter struct {
 
 // Lists all resources of this type
 func (*AwsVpcImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).ec2conn
+	svc := meta.(*AWSClient).ec2conn
 
 	result, err := svc.DescribeVpcs(nil)
 	if err != nil {
-	  return nil, err
+		return nil, err
 	}
-    existingInstances := result.Vpcs
+	existingInstances := result.Vpcs
 
-    namer := NewTagNamer()
+	namer := NewTagNamer()
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
 		instances[i] = &core.Instance{
@@ -27,11 +27,10 @@ func (*AwsVpcImporter) Describe(meta interface{}) ([]*core.Instance, error) {
 		}
 	}
 
-	 return instances, nil
+	return instances, nil
 }
 
 // Describes which other resources this resource can reference
 func (*AwsVpcImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

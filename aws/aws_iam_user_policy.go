@@ -1,10 +1,10 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamUserPolicyImporter struct {
@@ -12,7 +12,7 @@ type AwsIamUserPolicyImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamUserPolicyImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	// List all users
 	users := make([]*iam.User, 0)
@@ -39,9 +39,9 @@ func (*AwsIamUserPolicyImporter) Describe(meta interface{}) ([]*core.Instance, e
 				id := aws.StringValue(user.UserName) + ":" + aws.StringValue(i)
 				instance := &core.Instance{
 					Name: core.Format(id),
-					ID: id,
+					ID:   id,
 					CompositeID: map[string]string{
-						"user_name": aws.StringValue(user.UserName),
+						"user_name":   aws.StringValue(user.UserName),
 						"policy_name": aws.StringValue(i),
 					},
 				}
@@ -61,7 +61,7 @@ func (*AwsIamUserPolicyImporter) Describe(meta interface{}) ([]*core.Instance, e
 func (*AwsIamUserPolicyImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	state := &terraform.InstanceState{
 		ID: in.ID,
-		Attributes: map[string]string {
+		Attributes: map[string]string{
 			"user": in.CompositeID["user_name"],
 		},
 	}
@@ -71,7 +71,7 @@ func (*AwsIamUserPolicyImporter) Import(in *core.Instance, meta interface{}) ([]
 	}, false, nil
 }
 
-func (*AwsIamUserPolicyImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+func (*AwsIamUserPolicyImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
 	return in
 }
 

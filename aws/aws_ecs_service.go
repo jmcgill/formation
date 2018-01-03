@@ -1,11 +1,11 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/hashicorp/terraform/terraform"
-	"fmt"
+	"github.com/jmcgill/formation/core"
 )
 
 // TODO
@@ -16,7 +16,7 @@ type AwsEcsServiceImporter struct {
 
 // Lists all resources of this type
 func (*AwsEcsServiceImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).ecsconn
+	svc := meta.(*AWSClient).ecsconn
 
 	// List all clusters
 	clusters := make([]*string, 0)
@@ -41,7 +41,7 @@ func (*AwsEcsServiceImporter) Describe(meta interface{}) ([]*core.Instance, erro
 		err = svc.ListServicesPages(input, func(o *ecs.ListServicesOutput, lastPage bool) bool {
 			for _, i := range o.ServiceArns {
 				input := &ecs.DescribeServicesInput{
-					Cluster: cluster,
+					Cluster:  cluster,
 					Services: []*string{i},
 				}
 				services, _ := svc.DescribeServices(input)
@@ -75,7 +75,7 @@ func (*AwsEcsServiceImporter) Describe(meta interface{}) ([]*core.Instance, erro
 func (*AwsEcsServiceImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	state := &terraform.InstanceState{
 		ID: in.CompositeID["service_arn"],
-		Attributes: map[string]string {
+		Attributes: map[string]string{
 			"cluster": in.CompositeID["cluster_arn"],
 		},
 	}
@@ -84,19 +84,19 @@ func (*AwsEcsServiceImporter) Import(in *core.Instance, meta interface{}) ([]*te
 	}, false, nil
 }
 
-func (*AwsEcsServiceImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+func (*AwsEcsServiceImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
 	return in
 }
 
 // Describes which other resources this resource can reference
 func (*AwsEcsServiceImporter) Links() map[string]string {
 	return map[string]string{
-		"task_definition": "aws_ecs_task_definition.arn",
-		"cluster": "aws_ecs_cluster.arn",
-		"iam_role": "aws_iam_role.arn",
-		"load_balancer.elb_name": "aws_elb.name",
-		"load_balancer.target_group_arn": "aws_alb_target_group.arn",
-		"network_configuration.subnet": "aws_subnet.id",
+		"task_definition":                       "aws_ecs_task_definition.arn",
+		"cluster":                               "aws_ecs_cluster.arn",
+		"iam_role":                              "aws_iam_role.arn",
+		"load_balancer.elb_name":                "aws_elb.name",
+		"load_balancer.target_group_arn":        "aws_alb_target_group.arn",
+		"network_configuration.subnet":          "aws_subnet.id",
 		"network_configuration.security_groups": "aws_security_group.id",
 	}
 }

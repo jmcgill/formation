@@ -1,10 +1,10 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamRolePolicyAttachmentImporter struct {
@@ -12,7 +12,7 @@ type AwsIamRolePolicyAttachmentImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamRolePolicyAttachmentImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	// List roles`
 	roles := make([]*iam.Role, 0)
@@ -37,8 +37,8 @@ func (*AwsIamRolePolicyAttachmentImporter) Describe(meta interface{}) ([]*core.I
 				instance := &core.Instance{
 					Name: core.Format(aws.StringValue(group.RoleName)) + "_" + aws.StringValue(policy.PolicyName),
 					ID:   "unused",
-					CompositeID: map[string]string {
-						"role_name": aws.StringValue(group.RoleName),
+					CompositeID: map[string]string{
+						"role_name":  aws.StringValue(group.RoleName),
 						"policy_arn": aws.StringValue(policy.PolicyArn),
 					},
 				}
@@ -55,13 +55,12 @@ func (*AwsIamRolePolicyAttachmentImporter) Describe(meta interface{}) ([]*core.I
 	return instances, nil
 }
 
-
 func (*AwsIamRolePolicyAttachmentImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	id := in.CompositeID["role_name"] + ":" + in.CompositeID["policy_arn"]
 	state := &terraform.InstanceState{
 		ID: id,
-		Attributes: map[string]string {
-			"role": in.CompositeID["role_name"],
+		Attributes: map[string]string{
+			"role":       in.CompositeID["role_name"],
 			"policy_arn": in.CompositeID["policy_arn"],
 		},
 	}
@@ -71,14 +70,14 @@ func (*AwsIamRolePolicyAttachmentImporter) Import(in *core.Instance, meta interf
 	}, false, nil
 }
 
-func (*AwsIamRolePolicyAttachmentImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+func (*AwsIamRolePolicyAttachmentImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
 	return in
 }
 
 // Describes which other resources this resource can reference
 func (*AwsIamRolePolicyAttachmentImporter) Links() map[string]string {
 	return map[string]string{
-		"role": "aws_iam_role.id",
+		"role":       "aws_iam_role.id",
 		"policy_arn": "aws_iam_policy.arn",
 	}
 }

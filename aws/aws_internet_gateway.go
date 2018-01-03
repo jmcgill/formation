@@ -1,8 +1,8 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsInternetGatewayImporter struct {
@@ -10,12 +10,12 @@ type AwsInternetGatewayImporter struct {
 
 // Lists all resources of this type
 func (*AwsInternetGatewayImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).ec2conn
+	svc := meta.(*AWSClient).ec2conn
 
 	// Add code to list resources here
 	result, err := svc.DescribeInternetGateways(nil)
 	if err != nil {
-	  return nil, err
+		return nil, err
 	}
 	existingInstances := result.InternetGateways
 

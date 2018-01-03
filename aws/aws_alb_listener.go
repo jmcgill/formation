@@ -19,7 +19,7 @@ func (*AwsAlbListenerImporter) Describe(meta interface{}) ([]*core.Instance, err
 	//  return nil, err
 	//}
 
-    //existingInstances := ... // e.g. result.Buckets
+	//existingInstances := ... // e.g. result.Buckets
 	//instances := make([]*core.Instance, len(existingInstances))
 	//for i, existingInstance := range existingInstances {
 	//	instances[i] = &core.Instance{
@@ -33,6 +33,5 @@ func (*AwsAlbListenerImporter) Describe(meta interface{}) ([]*core.Instance, err
 
 // Describes which other resources this resource can reference
 func (*AwsAlbListenerImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

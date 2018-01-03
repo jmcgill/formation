@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsRoute53RecordImporter struct {
@@ -11,7 +11,7 @@ type AwsRoute53RecordImporter struct {
 
 // Lists all resources of this type
 func (*AwsRoute53RecordImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).r53conn
+	svc := meta.(*AWSClient).r53conn
 
 	// Add code to list resources here
 	zones := make([]*route53.HostedZone, 0)
@@ -43,7 +43,6 @@ func (*AwsRoute53RecordImporter) Describe(meta interface{}) ([]*core.Instance, e
 			return nil, err
 		}
 
-
 		for _, record := range records {
 			id := aws.StringValue(zone.Id) + "_" + aws.StringValue(record.Name) + "_" + aws.StringValue(record.Type)
 			if record.SetIdentifier != nil {
@@ -52,7 +51,7 @@ func (*AwsRoute53RecordImporter) Describe(meta interface{}) ([]*core.Instance, e
 
 			instances = append(instances, &core.Instance{
 				Name: id,
-				ID: id,
+				ID:   id,
 			})
 
 		}

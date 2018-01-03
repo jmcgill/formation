@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/jmcgill/formation/core"
 	"strings"
 )
 
@@ -12,7 +12,7 @@ type AwsSqsQueuePolicyImporter struct {
 
 // Lists all resources of this type
 func (*AwsSqsQueuePolicyImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).sqsconn
+	svc := meta.(*AWSClient).sqsconn
 
 	// Add code to list resources here
 	result, err := svc.ListQueues(nil)

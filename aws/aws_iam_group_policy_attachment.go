@@ -1,10 +1,10 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamGroupPolicyAttachmentImporter struct {
@@ -12,7 +12,7 @@ type AwsIamGroupPolicyAttachmentImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamGroupPolicyAttachmentImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	// List groups
 	groups := make([]*iam.Group, 0)
@@ -37,7 +37,7 @@ func (*AwsIamGroupPolicyAttachmentImporter) Describe(meta interface{}) ([]*core.
 				instance := &core.Instance{
 					Name: core.Format(aws.StringValue(group.GroupName)) + "_" + aws.StringValue(policy.PolicyName),
 					ID:   "unused",
-					CompositeID: map[string]string {
+					CompositeID: map[string]string{
 						"group_name": aws.StringValue(group.GroupName),
 						"policy_arn": aws.StringValue(policy.PolicyArn),
 					},
@@ -55,13 +55,12 @@ func (*AwsIamGroupPolicyAttachmentImporter) Describe(meta interface{}) ([]*core.
 	return instances, nil
 }
 
-
 func (*AwsIamGroupPolicyAttachmentImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	id := in.CompositeID["group_name"] + ":" + in.CompositeID["policy_arn"]
 	state := &terraform.InstanceState{
 		ID: id,
-		Attributes: map[string]string {
-			"group": in.CompositeID["group_name"],
+		Attributes: map[string]string{
+			"group":      in.CompositeID["group_name"],
 			"policy_arn": in.CompositeID["policy_arn"],
 		},
 	}
@@ -71,14 +70,14 @@ func (*AwsIamGroupPolicyAttachmentImporter) Import(in *core.Instance, meta inter
 	}, false, nil
 }
 
-func (*AwsIamGroupPolicyAttachmentImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+func (*AwsIamGroupPolicyAttachmentImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
 	return in
 }
 
 // Describes which other resources this resource can reference
 func (*AwsIamGroupPolicyAttachmentImporter) Links() map[string]string {
 	return map[string]string{
-		"group": "aws_iam_group.name",
+		"group":      "aws_iam_group.name",
 		"policy_arn": "aws_iam_policy.arn",
 	}
 }

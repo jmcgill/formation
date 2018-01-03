@@ -1,10 +1,10 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/core"
 	"strings"
 )
 
@@ -13,7 +13,7 @@ type AwsInstanceImporter struct {
 
 // Lists all resources of this type
 func (*AwsInstanceImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).ec2conn
+	svc := meta.(*AWSClient).ec2conn
 
 	existingInstances := make([]*ec2.Instance, 0)
 	err := svc.DescribeInstancesPages(nil, func(o *ec2.DescribeInstancesOutput, lastPage bool) bool {
@@ -42,13 +42,13 @@ func (*AwsInstanceImporter) Describe(meta interface{}) ([]*core.Instance, error)
 }
 
 func (*AwsInstanceImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
-	svc :=  meta.(*AWSClient).ec2conn
+	svc := meta.(*AWSClient).ec2conn
 
 	attributeUserData := "userData"
 
 	input := &ec2.DescribeInstanceAttributeInput{
 		InstanceId: &in.ID,
-		Attribute: &attributeUserData,
+		Attribute:  &attributeUserData,
 	}
 
 	output, err := svc.DescribeInstanceAttribute(input)
@@ -57,9 +57,8 @@ func (*AwsInstanceImporter) Import(in *core.Instance, meta interface{}) ([]*terr
 	}
 
 	state := &terraform.InstanceState{
-		ID: in.ID,
-		Attributes: map[string]string {
-		},
+		ID:         in.ID,
+		Attributes: map[string]string{},
 	}
 
 	if output.UserData != nil && output.UserData.Value != nil {
@@ -72,7 +71,7 @@ func (*AwsInstanceImporter) Import(in *core.Instance, meta interface{}) ([]*terr
 	}, false, nil
 }
 
-func (*AwsInstanceImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+func (*AwsInstanceImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
 	for key, _ := range in.Attributes {
 		if strings.HasPrefix(key, "ebs_block_device") {
 			delete(in.Attributes, key)
@@ -87,18 +86,18 @@ func (*AwsInstanceImporter) Clean(in *terraform.InstanceState, meta interface{})
 // Come back and check links once all resources are imported.
 func (*AwsInstanceImporter) Links() map[string]string {
 	return map[string]string{
-		"ami": "aws_ami.id",
+		"ami":               "aws_ami.id",
 		"availability_zone": "aws_availability_zone.name",
-		"placement_group": "aws_placement_group.id",
+		"placement_group":   "aws_placement_group.id",
 
 		// Should this be ARN or name? The documentation suggests
 		// name, but that is optional.
-		"security_groups": "aws_security_group.arn",
-		"vpc_security_group_ids": "aws_security_group.id",
-		"subnet_id": "aws_subnet_id.id",
-		"iam_instance_profile": "aws_iam_instance_profile.name",
-		"ebs_block_device.device_name": "aws_ebs_volume.id",
-		"ebs_block_device.snapshot_id": "aws_ebs_snapshot.id",
+		"security_groups":                        "aws_security_group.arn",
+		"vpc_security_group_ids":                 "aws_security_group.id",
+		"subnet_id":                              "aws_subnet_id.id",
+		"iam_instance_profile":                   "aws_iam_instance_profile.name",
+		"ebs_block_device.device_name":           "aws_ebs_volume.id",
+		"ebs_block_device.snapshot_id":           "aws_ebs_snapshot.id",
 		"network_interface.network_interface_id": "aws_network_interface.id",
 	}
 }

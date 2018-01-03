@@ -19,7 +19,7 @@ func (*AwsElasticsearchDomainImporter) Describe(meta interface{}) ([]*core.Insta
 	//  return nil, err
 	//}
 
-    //existingInstances := ... // e.g. result.Buckets
+	//existingInstances := ... // e.g. result.Buckets
 	//instances := make([]*core.Instance, len(existingInstances))
 	//for i, existingInstance := range existingInstances {
 	//	instances[i] = &core.Instance{
@@ -33,6 +33,5 @@ func (*AwsElasticsearchDomainImporter) Describe(meta interface{}) ([]*core.Insta
 
 // Describes which other resources this resource can reference
 func (*AwsElasticsearchDomainImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

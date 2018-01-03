@@ -10,15 +10,15 @@ type AwsSqsQueueImporter struct {
 
 // Lists all resources of this type
 func (*AwsSqsQueueImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).sqsconn
+	svc := meta.(*AWSClient).sqsconn
 
 	// Add code to list resources here
 	result, err := svc.ListQueues(nil)
 	if err != nil {
-	  return nil, err
+		return nil, err
 	}
 
-    existingInstances := result.QueueUrls
+	existingInstances := result.QueueUrls
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
 		urlComponents := strings.Split(*existingInstance, "/")
@@ -28,7 +28,7 @@ func (*AwsSqsQueueImporter) Describe(meta interface{}) ([]*core.Instance, error)
 		}
 	}
 
-	 return instances, nil
+	return instances, nil
 }
 
 // Describes which other resources this resource can reference

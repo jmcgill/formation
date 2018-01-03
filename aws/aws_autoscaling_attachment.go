@@ -19,7 +19,7 @@ func (*AwsAutoscalingAttachmentImporter) Describe(meta interface{}) ([]*core.Ins
 	//  return nil, err
 	//}
 
-    //existingInstances := ... // e.g. result.Buckets
+	//existingInstances := ... // e.g. result.Buckets
 	//instances := make([]*core.Instance, len(existingInstances))
 	//for i, existingInstance := range existingInstances {
 	//	instances[i] = &core.Instance{
@@ -33,6 +33,5 @@ func (*AwsAutoscalingAttachmentImporter) Describe(meta interface{}) ([]*core.Ins
 
 // Describes which other resources this resource can reference
 func (*AwsAutoscalingAttachmentImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

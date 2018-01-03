@@ -1,10 +1,10 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamGroupPolicyImporter struct {
@@ -12,7 +12,7 @@ type AwsIamGroupPolicyImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamGroupPolicyImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	// List groups
 	groups := make([]*iam.Group, 0)
@@ -37,8 +37,8 @@ func (*AwsIamGroupPolicyImporter) Describe(meta interface{}) ([]*core.Instance, 
 				instance := &core.Instance{
 					Name: core.Format(aws.StringValue(policy)),
 					ID:   aws.StringValue(policy),
-					CompositeID: map[string]string {
-						"group_name": aws.StringValue(group.GroupName),
+					CompositeID: map[string]string{
+						"group_name":  aws.StringValue(group.GroupName),
 						"policy_name": aws.StringValue(policy),
 					},
 				}
@@ -52,17 +52,16 @@ func (*AwsIamGroupPolicyImporter) Describe(meta interface{}) ([]*core.Instance, 
 		}
 	}
 
-	 return instances, nil
+	return instances, nil
 }
-
 
 func (*AwsIamGroupPolicyImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	id := in.CompositeID["group_name"] + ":" + in.CompositeID["policy_name"]
 	state := &terraform.InstanceState{
 		ID: id,
-		Attributes: map[string]string {
+		Attributes: map[string]string{
 			"group": in.CompositeID["group_name"],
-			"name": in.CompositeID["policy_name"],
+			"name":  in.CompositeID["policy_name"],
 		},
 	}
 
@@ -71,7 +70,7 @@ func (*AwsIamGroupPolicyImporter) Import(in *core.Instance, meta interface{}) ([
 	}, false, nil
 }
 
-func (*AwsIamGroupPolicyImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+func (*AwsIamGroupPolicyImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
 	return in
 }
 

@@ -54,8 +54,7 @@ func (p *InstanceStateParser) currentResource() *InlineResource {
 }
 
 func (p *InstanceStateParser) Parse(state *terraform.InstanceState) *Resource {
-	resource := &Resource{
-	}
+	resource := &Resource{}
 
 	// TODO(jimmy): Wrapping InstanceState like this is no longer valuable - convert to a helper
 	// method which returns a SortedInstanceState

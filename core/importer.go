@@ -6,7 +6,7 @@ type Instance struct {
 	Name string
 
 	// One of ID or CompositeID must be set
-	ID   string
+	ID          string
 	CompositeID map[string]string
 }
 
@@ -21,5 +21,5 @@ type PatchyImporter interface {
 	Describe(meta interface{}) ([]*Instance, error)
 	Links() map[string]string
 	Import(in *Instance, meta interface{}) ([]*terraform.InstanceState, bool, error)
-	Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState)
+	Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState
 }

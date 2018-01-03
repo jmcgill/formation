@@ -1,8 +1,8 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamAccountAliasImporter struct {
@@ -10,14 +10,14 @@ type AwsIamAccountAliasImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamAccountAliasImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	result, err := svc.ListAccountAliases(nil)
 	if err != nil {
-	  return nil, err
+		return nil, err
 	}
 
-    existingInstances := result.AccountAliases
+	existingInstances := result.AccountAliases
 	instances := make([]*core.Instance, len(existingInstances))
 	for i, existingInstance := range existingInstances {
 		instances[i] = &core.Instance{
@@ -31,6 +31,5 @@ func (*AwsIamAccountAliasImporter) Describe(meta interface{}) ([]*core.Instance,
 
 // Describes which other resources this resource can reference
 func (*AwsIamAccountAliasImporter) Links() map[string]string {
-	return map[string]string{
-	}
+	return map[string]string{}
 }

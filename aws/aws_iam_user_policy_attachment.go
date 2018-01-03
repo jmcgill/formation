@@ -1,10 +1,10 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsIamUserPolicyAttachmentImporter struct {
@@ -12,7 +12,7 @@ type AwsIamUserPolicyAttachmentImporter struct {
 
 // Lists all resources of this type
 func (*AwsIamUserPolicyAttachmentImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).iamconn
+	svc := meta.(*AWSClient).iamconn
 
 	// List users
 	users := make([]*iam.User, 0)
@@ -37,8 +37,8 @@ func (*AwsIamUserPolicyAttachmentImporter) Describe(meta interface{}) ([]*core.I
 				instance := &core.Instance{
 					Name: core.Format(aws.StringValue(user.UserName)) + "_" + aws.StringValue(policy.PolicyName),
 					ID:   "unused",
-					CompositeID: map[string]string {
-						"user_name": aws.StringValue(user.UserName),
+					CompositeID: map[string]string{
+						"user_name":  aws.StringValue(user.UserName),
 						"policy_arn": aws.StringValue(policy.PolicyArn),
 					},
 				}
@@ -55,13 +55,12 @@ func (*AwsIamUserPolicyAttachmentImporter) Describe(meta interface{}) ([]*core.I
 	return instances, nil
 }
 
-
 func (*AwsIamUserPolicyAttachmentImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	id := in.CompositeID["user_name"] + ":" + in.CompositeID["policy_arn"]
 	state := &terraform.InstanceState{
 		ID: id,
-		Attributes: map[string]string {
-			"user": in.CompositeID["user_name"],
+		Attributes: map[string]string{
+			"user":       in.CompositeID["user_name"],
 			"policy_arn": in.CompositeID["policy_arn"],
 		},
 	}
@@ -71,14 +70,14 @@ func (*AwsIamUserPolicyAttachmentImporter) Import(in *core.Instance, meta interf
 	}, false, nil
 }
 
-func (*AwsIamUserPolicyAttachmentImporter) Clean(in *terraform.InstanceState, meta interface{}) (*terraform.InstanceState) {
+func (*AwsIamUserPolicyAttachmentImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
 	return in
 }
 
 // Describes which other resources this resource can reference
 func (*AwsIamUserPolicyAttachmentImporter) Links() map[string]string {
 	return map[string]string{
-		"user": "aws_iam_user.name",
+		"user":       "aws_iam_user.name",
 		"policy_arn": "aws_iam_policy.arn",
 	}
 }
