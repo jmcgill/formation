@@ -13,7 +13,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform/config/configschema"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
@@ -295,6 +294,9 @@ func main() {
 		for _, instance := range instances {
 			var instancesToImport []*terraform.InstanceState
 			importViaTerraform := true
+
+			fmt.Printf("Importing instansce\n")
+			spew.Dump(instance)
 
 			instanceInfo := &terraform.InstanceInfo{
 				// Id is a unique name to represent this instance. This is not related

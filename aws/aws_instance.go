@@ -5,7 +5,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/jmcgill/formation/core"
-	"strings"
+	//"strings"
+	//"fmt"
+	"fmt"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type AwsInstanceImporter struct {
@@ -30,12 +33,15 @@ func (*AwsInstanceImporter) Describe(meta interface{}) ([]*core.Instance, error)
 	}
 
 	namer := NewTagNamer()
-	instances := make([]*core.Instance, len(existingInstances))
-	for i, existingInstance := range existingInstances {
-		instances[i] = &core.Instance{
+	instances := make([]*core.Instance, 0)
+	for _, existingInstance := range existingInstances {
+		if aws.StringValue(existingInstance.State.Name) == "terminated" {
+			continue
+		}
+		instances = append(instances, &core.Instance{
 			Name: namer.NameOrDefault(existingInstance.Tags, existingInstance.InstanceId),
 			ID:   aws.StringValue(existingInstance.InstanceId),
-		}
+		})
 	}
 
 	return instances, nil
@@ -72,11 +78,15 @@ func (*AwsInstanceImporter) Import(in *core.Instance, meta interface{}) ([]*terr
 }
 
 func (*AwsInstanceImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
-	for key, _ := range in.Attributes {
-		if strings.HasPrefix(key, "ebs_block_device") {
-			delete(in.Attributes, key)
-		}
-	}
+	fmt.Printf("Cleaning\n")
+	spew.Dump(in)
+	//for key, _ := range in.Attributes {
+	//	fmt.Printf("Looking at key %s\n", key)
+	//	if strings.HasPrefix(key, "ebs_block_device") {
+	//		fmt.Printf("Deleting key %s\n", key)
+	//		delete(in.Attributes, key)
+	//	}
+	//}
 	return in
 }
 
