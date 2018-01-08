@@ -2,7 +2,9 @@ package aws
 
 import (
 	"github.com/jmcgill/formation/core"
-	//"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws"
+	// "github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type AwsEipImporter struct {
@@ -10,28 +12,35 @@ type AwsEipImporter struct {
 
 // Lists all resources of this type
 func (*AwsEipImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	return nil, nil
-	//svc :=  meta.(*AWSClient).ec2conn
+	svc :=  meta.(*AWSClient).ec2conn
 
-	// Add code to list resources here
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//  return nil, err
-	//}
+	result, err := svc.DescribeAddresses(nil)
+	if err != nil {
+	  return nil, err
+	}
 
-	//existingInstances := ... // e.g. result.Buckets
-	//instances := make([]*core.Instance, len(existingInstances))
-	//for i, existingInstance := range existingInstances {
-	//	instances[i] = &core.Instance{
-	//		Name: strings.Replace(aws.StringValue(existingInstance.Name), "-", "_", -1),
-	//		ID:   aws.StringValue(existingInstance.Name),
-	//	}
-	//}
+	existingInstances :=  result.Addresses // e.g. result.Buckets
 
-	// return instances, nil
+	namer := NewTagNamer()
+	instances := make([]*core.Instance, len(existingInstances))
+	for i, existingInstance := range existingInstances {
+		instances[i] = &core.Instance{
+			Name: namer.NameOrDefault(existingInstance.Tags, existingInstance.AllocationId),
+			ID:   aws.StringValue(existingInstance.AllocationId),
+		}
+	}
+
+	return instances, nil
 }
 
 // Describes which other resources this resource can reference
+//func (*AwsEipImporter) ForceOutput() map[string]string {
+//	return ["id", "instance"]
+//}
+
+// Describes which other resources this resource can reference
 func (*AwsEipImporter) Links() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+
+	}
 }
