@@ -3,5 +3,6 @@
 *.zip
 .terraform
 *.tfstate
+*.log
 main
 finalized/

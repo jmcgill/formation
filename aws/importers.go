@@ -84,7 +84,7 @@ func Importers() map[string]core.Importer {
 		"aws_ebs_volume": &AwsEbsVolumeImporter{},
 		// "aws_eip": &AwsEipImporter{},
 		// "aws_eip_association": &AwsEipAssociationImporter{},
-		// "aws_elb": &AwsElbImporter{},
+		"aws_elb": &AwsElbImporter{},
 		// "aws_elb_attachment": &AwsElbAttachmentImporter{},
 		"aws_instance": &AwsInstanceImporter{},
 		// "aws_key_pair": &AwsKeyPairImporter{},

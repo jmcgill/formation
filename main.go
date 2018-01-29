@@ -244,7 +244,8 @@ type ImportedResource struct {
 func main() {
 	f, err := os.Create("formation.log")
 	defer f.Close()
-	log.SetOutput(f)
+
+	errors := log.New(f, "[ERROR] ", log.Ldate|log.Ltime)
 
 	tfstate := flag.String("tfstate", "", "Path to an existing tfstate file to merge")
 	resourceToImport := flag.String("resource", "", "A specific resource type to import")
@@ -275,7 +276,7 @@ func main() {
 	c := terraform.NewResourceConfig(nil)
 	localProvider.Input(&UIInput{}, c)
 
-	err := localProvider.Configure(c)
+	err = localProvider.Configure(c)
 	if err != nil {
 		panic("Error configuring internal provider")
 	}
@@ -323,7 +324,7 @@ func main() {
 			if importViaTerraform {
 				instancesToImport, err = provider.ImportState(instanceInfo, instance.ID)
 				if err != nil {
-					log.Printf("[ERROR] Error importing instance: %s. Instance will be skipped", err)
+					errors.Printf("Error importing instance: %s. Instance will be skipped", err)
 					continue
 				}
 			}
@@ -331,7 +332,7 @@ func main() {
 			for _, instanceToImport := range instancesToImport {
 				instanceState, err := provider.Refresh(instanceInfo, instanceToImport)
 				if err != nil {
-					log.Printf("[ERROR] Error refreshing Instance State %s. Instance will be skipped", instanceToImport)
+					errors.Printf("Error refreshing Instance State %s. Instance will be skipped", instanceToImport)
 					continue;
 					// log.Fatalf("Error refreshing Instance State %s", instanceToImport)
 				}
@@ -478,7 +479,7 @@ func main() {
 		}
 	}
 
-	f, err := os.Create("terraform.tfstate")
+	f, err = os.Create("terraform.tfstate")
 	if err != nil {
 		log.Fatal("Failure to create TFState file")
 	}
