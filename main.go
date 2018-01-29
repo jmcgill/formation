@@ -242,6 +242,10 @@ type ImportedResource struct {
 }
 
 func main() {
+	f, err := os.Create("formation.log")
+	defer f.Close()
+	log.SetOutput(f)
+
 	tfstate := flag.String("tfstate", "", "Path to an existing tfstate file to merge")
 	resourceToImport := flag.String("resource", "", "A specific resource type to import")
 	flag.Parse()
@@ -286,6 +290,14 @@ func main() {
 
 	// For each importer
 	for resourceType, importer := range importers {
+		fmt.Printf("*** Importing: %s\n", resourceType)
+
+		// HACK
+		if _, err := os.Stat(resourceType + ".tf"); err == nil {
+			fmt.Printf("*** Skipping resource\n")
+			continue;
+		}
+
 		instances, err := importer.Describe(localSchemaProvider.Meta())
 		if err != nil {
 			panic(err)
@@ -294,9 +306,6 @@ func main() {
 		for _, instance := range instances {
 			var instancesToImport []*terraform.InstanceState
 			importViaTerraform := true
-
-			fmt.Printf("Importing instansce\n")
-			spew.Dump(instance)
 
 			instanceInfo := &terraform.InstanceInfo{
 				// Id is a unique name to represent this instance. This is not related
@@ -314,7 +323,7 @@ func main() {
 			if importViaTerraform {
 				instancesToImport, err = provider.ImportState(instanceInfo, instance.ID)
 				if err != nil {
-					log.Printf("[ERROR] Error importing instance: %s", err)
+					log.Printf("[ERROR] Error importing instance: %s. Instance will be skipped", err)
 					continue
 				}
 			}
@@ -322,7 +331,13 @@ func main() {
 			for _, instanceToImport := range instancesToImport {
 				instanceState, err := provider.Refresh(instanceInfo, instanceToImport)
 				if err != nil {
-					log.Fatalf("Error refreshing Instance State %s", instanceToImport)
+					log.Printf("[ERROR] Error refreshing Instance State %s. Instance will be skipped", instanceToImport)
+					continue;
+					// log.Fatalf("Error refreshing Instance State %s", instanceToImport)
+				}
+
+				if (instanceState == nil) {
+					continue;
 				}
 
 				if patchyImporter, ok := importer.(core.PatchyImporter); ok {
@@ -341,7 +356,6 @@ func main() {
 				request := &terraform.ProviderSchemaRequest{
 					ResourceTypes: []string{resourceType},
 				}
-				spew.Dump(request)
 				s, _ := provider.GetSchema(request)
 
 				// Mark computed fields - we don't want to output these
@@ -361,6 +375,28 @@ func main() {
 				IndexFields(resource, resource.Fields, index)
 			}
 		}
+
+		//f, err := os.Create(resourceType + ".tf")
+		//defer f.Close()
+		//
+		//if err != nil {
+		//	log.Fatalf("Error creating file for resource %s\n", resourceType)
+		//}
+
+		//for i, importedResource := range allResources[resourceType] {
+		//	resource := importedResource.resource
+		//
+		//	// TEMP: Disable resource linking
+		//	// LinkFields(resource, resource.Fields, importers[resource.Type].Links(), index)
+		//
+		//	printer := core.Printer{}
+		//	printer.PrintToFile(f, resource)
+		//
+		//	// Space out resources for readability
+		//	if i != len(allResources[resourceType])-1 {
+		//		fmt.Fprint(f, "\n\n")
+		//	}
+		//}
 	}
 
 	// At this point, all resources have been index

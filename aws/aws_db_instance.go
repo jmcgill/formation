@@ -12,6 +12,7 @@ type AwsDbInstanceImporter struct {
 func (*AwsDbInstanceImporter) Describe(meta interface{}) ([]*core.Instance, error) {
 	return nil, nil
 	//svc :=  meta.(*AWSClient).rdsconn
+	//svc.DescribeDBInstancesPages()
 
 	// Add code to list resources here
 	//result, err := svc.ListBuckets(nil)

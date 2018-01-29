@@ -176,7 +176,7 @@ func Importers() map[string]core.Importer {
 
 		// RDS Resources
 		// "aws_db_event_subscription": &AwsDbEventSubscriptionImporter{},
-		// "aws_db_instance": &AwsDbInstanceImporter{},
+		"aws_db_instance": &AwsDbInstanceImporter{},
 		// "aws_db_option_group": &AwsDbOptionGroupImporter{},
 		// "aws_db_parameter_group": &AwsDbParameterGroupImporter{},
 		// "aws_db_security_group": &AwsDbSecurityGroupImporter{},
