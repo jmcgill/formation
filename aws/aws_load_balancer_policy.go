@@ -3,7 +3,7 @@ package aws
 import (
 	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
-	"strings"
+	"github.com/hashicorp/terraform/terraform"
 	"github.com/aws/aws-sdk-go/service/elb"
 )
 
