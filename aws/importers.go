@@ -1,3 +1,4 @@
+
 package aws
 
 import "github.com/jmcgill/formation/core"
@@ -85,6 +86,7 @@ func Importers() map[string]core.Importer {
 		// "aws_eip": &AwsEipImporter{},
 		// "aws_eip_association": &AwsEipAssociationImporter{},
 		"aws_elb": &AwsElbImporter{},
+		// Incompatible with aws_elb
 		// "aws_elb_attachment": &AwsElbAttachmentImporter{},
 		"aws_instance": &AwsInstanceImporter{},
 		// "aws_key_pair": &AwsKeyPairImporter{},
@@ -93,7 +95,7 @@ func Importers() map[string]core.Importer {
 		// "aws_lb_ssl_negotiation_policy": &AwsLbSslNegotiationPolicyImporter{},
 		// "aws_load_balancer_backend_server_policy": &AwsLoadBalancerBackendServerPolicyImporter{},
 		// "aws_load_balancer_listener_policy": &AwsLoadBalancerListenerPolicyImporter{},
-		// "aws_load_balancer_policy": &AwsLoadBalancerPolicyImporter{},
+		"aws_load_balancer_policy": &AwsLoadBalancerPolicyImporter{},
 		// "aws_placement_group": &AwsPlacementGroupImporter{},
 		// "aws_proxy_protocol_policy": &AwsProxyProtocolPolicyImporter{},
 		// "aws_spot_datafeed_subscription": &AwsSpotDatafeedSubscriptionImporter{},

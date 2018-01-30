@@ -16,9 +16,7 @@ func (*AwsElbImporter) Describe(meta interface{}) ([]*core.Instance, error) {
 	// Add code to list resources here
 	existingInstances := make([]*elb.LoadBalancerDescription, 0)
 	err := svc.DescribeLoadBalancersPages(nil, func(o *elb.DescribeLoadBalancersOutput, lastPage bool) bool {
-		for _, i := range o.LoadBalancerDescriptions {
-			existingInstances = append(existingInstances, i)
-		}
+		existingInstances = append(existingInstances, o.LoadBalancerDescriptions...)
 		return true // continue paging
 	})
 
