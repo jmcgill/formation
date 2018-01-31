@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/redshift"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsRedshiftClusterImporter struct {
@@ -11,7 +11,7 @@ type AwsRedshiftClusterImporter struct {
 
 // Lists all resources of this type
 func (*AwsRedshiftClusterImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).redshiftconn
+	svc := meta.(*AWSClient).redshiftconn
 
 	existingInstances := make([]*redshift.Cluster, 0)
 	err := svc.DescribeClustersPages(nil, func(o *redshift.DescribeClustersOutput, lastPage bool) bool {
@@ -31,14 +31,14 @@ func (*AwsRedshiftClusterImporter) Describe(meta interface{}) ([]*core.Instance,
 		}
 	}
 
-	 return instances, nil
+	return instances, nil
 }
 
 // Describes which other resources this resource can reference
 func (*AwsRedshiftClusterImporter) Links() map[string]string {
 	return map[string]string{
 		"vpc_security_group_ids": "aws_security_group.id",
-		"elastic_ip": "aws_eip.id",
-		"iam_roles": "aws_iam_role.arn",
+		"elastic_ip":             "aws_eip.id",
+		"iam_roles":              "aws_iam_role.arn",
 	}
 }

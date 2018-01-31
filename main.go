@@ -251,6 +251,8 @@ func main() {
 	resourceToImport := flag.String("resource", "", "A specific resource type to import")
 	flag.Parse()
 
+	fmt.Printf("*** RUNNING")
+
 	// TODO(jimmy): Bundle these into an object
 	allResources := make(map[string][]*ImportedResource)
 
@@ -261,9 +263,15 @@ func main() {
 
 	// Restrict to a specific resource type, if requested
 	if *resourceToImport != "" {
-		importers = map[string]core.Importer{
-			*resourceToImport: importers[*resourceToImport],
+		fmt.Printf("***** IMPORTING A LIMITED SET")
+		i := make(map[string]core.Importer)
+		parts := strings.Split(*resourceToImport, ",")
+		for _, p := range parts {
+			fmt.Printf("IMPORT %s\n", p)
+			i[p] = importers[p]
 		}
+
+		importers = i
 	}
 
 	// Configure Terraform Plugin
@@ -296,7 +304,7 @@ func main() {
 		// HACK
 		if _, err := os.Stat(resourceType + ".tf"); err == nil {
 			fmt.Printf("*** Skipping resource\n")
-			continue;
+			continue
 		}
 
 		instances, err := importer.Describe(localSchemaProvider.Meta())
@@ -333,12 +341,12 @@ func main() {
 				instanceState, err := provider.Refresh(instanceInfo, instanceToImport)
 				if err != nil {
 					errors.Printf("Error refreshing Instance State %s. Instance will be skipped", instanceToImport)
-					continue;
+					continue
 					// log.Fatalf("Error refreshing Instance State %s", instanceToImport)
 				}
 
-				if (instanceState == nil) {
-					continue;
+				if instanceState == nil {
+					continue
 				}
 
 				if patchyImporter, ok := importer.(core.PatchyImporter); ok {

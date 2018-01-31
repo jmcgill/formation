@@ -1,4 +1,3 @@
-
 package aws
 
 import "github.com/jmcgill/formation/core"
@@ -253,9 +252,9 @@ func Importers() map[string]core.Importer {
 		// Incompatible with aws_route_table.
 		// "aws_route": &AwsRouteImporter{},
 
-		"aws_route_table": &AwsRouteTableImporter{},
+		"aws_route_table":             &AwsRouteTableImporter{},
 		"aws_route_table_association": &AwsRouteTableAssociationImporter{},
-		"aws_security_group": &AwsSecurityGroupImporter{},
+		"aws_security_group":          &AwsSecurityGroupImporter{},
 		// "aws_network_interface_sg_attachment": &AwsNetworkInterfaceSgAttachmentImporter{},
 		// "aws_security_group_rule": &AwsSecurityGroupRuleImporter{},
 		"aws_subnet": &AwsSubnetImporter{},

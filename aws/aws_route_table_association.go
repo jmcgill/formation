@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsRouteTableAssociationImporter struct {
@@ -32,7 +32,7 @@ func (*AwsRouteTableAssociationImporter) Describe(meta interface{}) ([]*core.Ins
 			instances = append(instances, &core.Instance{
 				Name: name,
 				ID:   aws.StringValue(association.RouteTableAssociationId),
-				CompositeID: map[string]string {
+				CompositeID: map[string]string{
 					"route_table_id": aws.StringValue(association.RouteTableId),
 				},
 			})
@@ -41,7 +41,6 @@ func (*AwsRouteTableAssociationImporter) Describe(meta interface{}) ([]*core.Ins
 
 	return instances, nil
 }
-
 
 func (*AwsRouteTableAssociationImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
 	state := &terraform.InstanceState{
@@ -64,6 +63,6 @@ func (*AwsRouteTableAssociationImporter) Clean(in *terraform.InstanceState, meta
 func (*AwsRouteTableAssociationImporter) Links() map[string]string {
 	return map[string]string{
 		"route_table_id": "aws_route_table.id",
-		"subnet_id": "aws_subnet.id",
+		"subnet_id":      "aws_subnet.id",
 	}
 }

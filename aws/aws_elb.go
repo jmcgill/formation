@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/elb"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsElbImporter struct {
@@ -11,7 +11,7 @@ type AwsElbImporter struct {
 
 // Lists all resources of this type
 func (*AwsElbImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).elbconn
+	svc := meta.(*AWSClient).elbconn
 
 	// Add code to list resources here
 	existingInstances := make([]*elb.LoadBalancerDescription, 0)
@@ -38,7 +38,7 @@ func (*AwsElbImporter) Describe(meta interface{}) ([]*core.Instance, error) {
 // Describes which other resources this resource can reference
 func (*AwsElbImporter) Links() map[string]string {
 	return map[string]string{
-		"instances": "aws_instance.id",
+		"instances":          "aws_instance.id",
 		"access_logs.bucket": "aws_s3_bucket.bucket",
 		// "listener.ssl_certificate_id": "???"
 	}

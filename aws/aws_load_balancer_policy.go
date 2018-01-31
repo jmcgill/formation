@@ -1,10 +1,10 @@
 package aws
 
 import (
-	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/hashicorp/terraform/terraform"
 	"github.com/aws/aws-sdk-go/service/elb"
+	"github.com/hashicorp/terraform/terraform"
+	"github.com/jmcgill/formation/core"
 )
 
 type AwsLoadBalancerPolicyImporter struct {
@@ -12,7 +12,7 @@ type AwsLoadBalancerPolicyImporter struct {
 
 // Lists all resources of this type
 func (*AwsLoadBalancerPolicyImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	svc :=  meta.(*AWSClient).elbconn
+	svc := meta.(*AWSClient).elbconn
 
 	elbs := make([]*elb.LoadBalancerDescription, 0)
 	err := svc.DescribeLoadBalancersPages(nil, func(o *elb.DescribeLoadBalancersOutput, lastPage bool) bool {
