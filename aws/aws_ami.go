@@ -2,36 +2,60 @@ package aws
 
 import (
 	"github.com/jmcgill/formation/core"
-	//"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/hashicorp/terraform/config/configschema"
+	"github.com/hashicorp/terraform/terraform"
+	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 type AwsAmiImporter struct {
 }
 
-// Lists all resources of this type
 func (*AwsAmiImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	return nil, nil
-	//svc :=  meta.(*AWSClient).ec2conn
+	svc :=  meta.(*AWSClient).ec2conn
 
-	// Add code to list resources here
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//  return nil, err
-	//}
+	input := ec2.DescribeImagesInput{
+		Owners: []*string{aws.String("self")},
+	}
 
-	//existingInstances := ... // e.g. result.Buckets
-	//instances := make([]*core.Instance, len(existingInstances))
-	//for i, existingInstance := range existingInstances {
-	//	instances[i] = &core.Instance{
-	//		Name: strings.Replace(aws.StringValue(existingInstance.Name), "-", "_", -1),
-	//		ID:   aws.StringValue(existingInstance.Name),
-	//	}
-	//}
+	result, err := svc.DescribeImages(&input)
+	if err != nil {
+	  return nil, err
+	}
 
-	// return instances, nil
+	existingInstances := result.Images
+	instances := make([]*core.Instance, len(existingInstances))
+	for i, image := range existingInstances {
+		instances[i] = &core.Instance{
+			Name: core.Format(aws.StringValue(image.Name)),
+			ID:   aws.StringValue(image.ImageId),
+		}
+	}
+
+	 return instances, nil
+}
+
+func (*AwsAmiImporter) Import(in *core.Instance, meta interface{}) ([]*terraform.InstanceState, bool, error) {
+	// the source too.
+	state := &terraform.InstanceState{
+		ID: in.ID,
+	}
+	return []*terraform.InstanceState{
+		state,
+	}, false, nil
+}
+
+func (*AwsAmiImporter) Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState {
+	return in
+}
+
+func (*AwsAmiImporter) AdjustSchema(in *configschema.Block) *configschema.Block {
+	return in
 }
 
 // Describes which other resources this resource can reference
 func (*AwsAmiImporter) Links() map[string]string {
 	return map[string]string{}
 }
+
+

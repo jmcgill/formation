@@ -68,7 +68,7 @@ func Importers() map[string]core.Importer {
 		"aws_dynamodb_table": &AwsDynamodbTableImporter{},
 
 		// EC2 Resources
-		// "aws_ami": &AwsAmiImporter{},
+		"aws_ami": &AwsAmiImporter{},
 		// "aws_ami_copy": &AwsAmiCopyImporter{},
 		// "aws_ami_from_instance": &AwsAmiFromInstanceImporter{},
 		// "aws_ami_launch_permission": &AwsAmiLaunchPermissionImporter{},
@@ -83,12 +83,18 @@ func Importers() map[string]core.Importer {
 		// "aws_ebs_snapshot": &AwsEbsSnapshotImporter{},
 		"aws_ebs_volume": &AwsEbsVolumeImporter{},
 		"aws_eip": &AwsEipImporter{},
+
+		// Not required - all information is imported as part of aws_eip
 		// "aws_eip_association": &AwsEipAssociationImporter{},
 		"aws_elb": &AwsElbImporter{},
-		// Incompatible with aws_elb
+
+		// Not required - all information is imported as part of aws_elb
 		// "aws_elb_attachment": &AwsElbAttachmentImporter{},
 		"aws_instance": &AwsInstanceImporter{},
+
+		// Not required - contains a secret
 		// "aws_key_pair": &AwsKeyPairImporter{},
+
 		// "aws_launch_configuration": &AwsLaunchConfigurationImporter{},
 		// "aws_lb_cookie_stickiness_policy": &AwsLbCookieStickinessPolicyImporter{},
 		// "aws_lb_ssl_negotiation_policy": &AwsLbSslNegotiationPolicyImporter{},
