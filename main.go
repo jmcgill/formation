@@ -301,7 +301,6 @@ func main() {
 	for resourceType, importer := range importers {
 		fmt.Printf("*** Importing: %s\n", resourceType)
 
-		// HACK
 		if _, err := os.Stat(resourceType + ".tf"); err == nil {
 			fmt.Printf("*** Skipping resource\n")
 			continue
@@ -366,9 +365,14 @@ func main() {
 					ResourceTypes: []string{resourceType},
 				}
 				s, _ := provider.GetSchema(request)
+				resourceSchema := s.ResourceTypes[resourceType]
+
+				if patchyImporter, ok := importer.(core.PatchyImporter); ok {
+					resourceSchema = patchyImporter.AdjustSchema(resourceSchema)
+				}
 
 				// Mark computed fields - we don't want to output these
-				MarkComputedFields(resource.Fields, s.ResourceTypes[resourceType])
+				MarkComputedFields(resource.Fields, resourceSchema)
 
 				// To get the resource schema we need to poke into the internal implementation of the AWS provider
 				schemaProvider := provider.(*schema.Provider)

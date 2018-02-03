@@ -1,6 +1,9 @@
 package core
 
-import "github.com/hashicorp/terraform/terraform"
+import (
+	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform/config/configschema"
+)
 
 type Instance struct {
 	Name string
@@ -22,4 +25,5 @@ type PatchyImporter interface {
 	Links() map[string]string
 	Import(in *Instance, meta interface{}) ([]*terraform.InstanceState, bool, error)
 	Clean(in *terraform.InstanceState, meta interface{}) *terraform.InstanceState
+	AdjustSchema(in *configschema.Block) *configschema.Block
 }

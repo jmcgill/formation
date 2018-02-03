@@ -82,7 +82,7 @@ func Importers() map[string]core.Importer {
 		// "aws_snapshot_create_volume_permission": &AwsSnapshotCreateVolumePermissionImporter{},
 		// "aws_ebs_snapshot": &AwsEbsSnapshotImporter{},
 		"aws_ebs_volume": &AwsEbsVolumeImporter{},
-		// "aws_eip": &AwsEipImporter{},
+		"aws_eip": &AwsEipImporter{},
 		// "aws_eip_association": &AwsEipAssociationImporter{},
 		"aws_elb": &AwsElbImporter{},
 		// Incompatible with aws_elb
