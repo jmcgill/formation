@@ -81,8 +81,11 @@ func Importers() map[string]core.Importer {
 
 		// Not tested - not used by Button
 		"aws_app_cookie_stickiness_policy": &AwsAppCookieStickinessPolicyImporter{},
+
+		// Not required - incompatible with aws_autoscaling_group
 		// "aws_autoscaling_attachment": &AwsAutoscalingAttachmentImporter{},
-		// "aws_autoscaling_group": &AwsAutoscalingGroupImporter{},
+
+		"aws_autoscaling_group": &AwsAutoscalingGroupImporter{},
 		// "aws_autoscaling_lifecycle_hook": &AwsAutoscalingLifecycleHookImporter{},
 		// "aws_autoscaling_notification": &AwsAutoscalingNotificationImporter{},
 		// "aws_autoscaling_policy": &AwsAutoscalingPolicyImporter{},

@@ -2,7 +2,8 @@ package aws
 
 import (
 	"github.com/jmcgill/formation/core"
-	//"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/autoscaling"
 )
 
 type AwsAutoscalingGroupImporter struct {
@@ -10,28 +11,37 @@ type AwsAutoscalingGroupImporter struct {
 
 // Lists all resources of this type
 func (*AwsAutoscalingGroupImporter) Describe(meta interface{}) ([]*core.Instance, error) {
-	return nil, nil
-	//svc :=  meta.(*AWSClient).elbv2conn
+	svc := meta.(*AWSClient).autoscalingconn
 
 	// Add code to list resources here
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//  return nil, err
-	//}
+	existingInstances := make([]*autoscaling.Group, 0)
+	err := svc.DescribeAutoScalingGroupsPages(nil, func(o *autoscaling.DescribeAutoScalingGroupsOutput, lastPage bool) bool {
+		for _, i := range o.AutoScalingGroups {
+			existingInstances = append(existingInstances, i)
+		}
+		return true // continue paging
+	})
 
-	//existingInstances := ... // e.g. result.Buckets
-	//instances := make([]*core.Instance, len(existingInstances))
-	//for i, existingInstance := range existingInstances {
-	//	instances[i] = &core.Instance{
-	//		Name: strings.Replace(aws.StringValue(existingInstance.Name), "-", "_", -1),
-	//		ID:   aws.StringValue(existingInstance.Name),
-	//	}
-	//}
+	if err != nil {
+		return nil, err
+	}
 
-	// return instances, nil
+	instances := make([]*core.Instance, len(existingInstances))
+	for i, existingInstance := range existingInstances {
+		instances[i] = &core.Instance{
+			Name: core.Format(aws.StringValue(existingInstance.AutoScalingGroupName)),
+			ID:   aws.StringValue(existingInstance.AutoScalingGroupName),
+		}
+	}
+
+	return instances, nil
 }
 
 // Describes which other resources this resource can reference
 func (*AwsAutoscalingGroupImporter) Links() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		"placement_group": "aws_placement_group.id",
+		"launch_configuration": "aws_launch_configuration.name",
+		"initial_lifecycle_hook.role_arn": "aws_role.arn",
+	}
 }
