@@ -65,7 +65,7 @@ func Importers() map[string]core.Importer {
 		// "aws_dx_lag": &AwsDxLagImporter{},
 
 		// DynamoDB Resources
-		// "aws_dynamodb_table": &AwsDynamodbTableImporter{},
+		"aws_dynamodb_table": &AwsDynamodbTableImporter{},
 
 		// EC2 Resources
 		// "aws_ami": &AwsAmiImporter{},
