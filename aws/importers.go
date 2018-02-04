@@ -71,23 +71,25 @@ func Importers() map[string]core.Importer {
 		"aws_ami": &AwsAmiImporter{},
 
 		// Not required - not used by Button
-		// "aws_ami_copy": &AwsAmiCopyImporter{},
+		// TODO "aws_ami_copy": &AwsAmiCopyImporter{},
 
 		// Not required - cannot be imported
-		// "aws_ami_from_instance": &AwsAmiFromInstanceImporter{},
+		// SKIP "aws_ami_from_instance": &AwsAmiFromInstanceImporter{},
 
 		// Not required - not used by Button
-		// "aws_ami_launch_permission": &AwsAmiLaunchPermissionImporter{},
+		// TODO "aws_ami_launch_permission": &AwsAmiLaunchPermissionImporter{},
 
-		// Not tested - not used by Button
 		"aws_app_cookie_stickiness_policy": &AwsAppCookieStickinessPolicyImporter{},
 
 		// Not required - incompatible with aws_autoscaling_group
-		// "aws_autoscaling_attachment": &AwsAutoscalingAttachmentImporter{},
+		// SKIP "aws_autoscaling_attachment": &AwsAutoscalingAttachmentImporter{},
 
 		"aws_autoscaling_group": &AwsAutoscalingGroupImporter{},
-		// "aws_autoscaling_lifecycle_hook": &AwsAutoscalingLifecycleHookImporter{},
-		// "aws_autoscaling_notification": &AwsAutoscalingNotificationImporter{},
+
+		// Not required - incompatible with aws_autoscaling_group
+		// SKIP "aws_autoscaling_lifecycle_hook": &AwsAutoscalingLifecycleHookImporter{},
+
+		"aws_autoscaling_notification": &AwsAutoscalingNotificationImporter{},
 		// "aws_autoscaling_policy": &AwsAutoscalingPolicyImporter{},
 		// "aws_autoscaling_schedule": &AwsAutoscalingScheduleImporter{},
 		// "aws_snapshot_create_volume_permission": &AwsSnapshotCreateVolumePermissionImporter{},
