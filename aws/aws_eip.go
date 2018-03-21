@@ -3,14 +3,16 @@ package aws
 import (
 	"github.com/jmcgill/formation/core"
 	"github.com/aws/aws-sdk-go/aws"
-	// "github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/davecgh/go-spew/spew"
 )
 
 type AwsEipImporter struct {
 }
 
 // Lists all resources of this type
+//
+// Issues:
+//	Does not auto-populate parameters correctly in the generated tf files; Terraform is marking the field as computed.
+//	https://github.com/jmcgill/formation/issues/14
 func (*AwsEipImporter) Describe(meta interface{}) ([]*core.Instance, error) {
 	svc :=  meta.(*AWSClient).ec2conn
 
@@ -32,11 +34,6 @@ func (*AwsEipImporter) Describe(meta interface{}) ([]*core.Instance, error) {
 
 	return instances, nil
 }
-
-// Describes which other resources this resource can reference
-//func (*AwsEipImporter) ForceOutput() map[string]string {
-//	return ["id", "instance"]
-//}
 
 // Describes which other resources this resource can reference
 func (*AwsEipImporter) Links() map[string]string {
