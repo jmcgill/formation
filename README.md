@@ -15,6 +15,36 @@ odd) design choices in order to preserve this compatibility.
 
 Formation can import a limited subset of resources. See [importers.go](https://github.com/jmcgill/formation/blob/master/aws/importers.go) for a list of resources that are supported.
 
+# Running
+go build .
+./formation
+
+Formation expects AWS credentials to be available in the standard AWS Environment Variables.
+
+Running formation with no arguments will import all resources that the provided credentials have access to. 
+
+## Importing only one resource type
+One resource can be imported at a type using the -resource parameter
+
+./formation -resource aws_route53_zone
+
+Multiple resources can be provided as a comma separated list
+
+./formation -resource aws_route53_zone,aws_route53_record
+
+## Merging with existing tfstate
+An existing tfstate file can be supplied as an argument to formation. In this case, all resources imported during this run will be appended to that tfstate file.
+
+./formation -tfstate terraform.tfstate
+
+## Merging with remote state
+To merge with state stored in a remote store (e.g. S3) first pull that state, run ./formation and then push it
+
+terraform init
+terraform state pull > terraform.tfstate
+./formation -tfstate terraform.tfstate
+terraform state push terraform.tfstate
+
 # Contributing
 
 Contributing is _super easy_ and pull requests are _very welcome_. To contribute, follow the guides below!

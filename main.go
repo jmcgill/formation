@@ -251,8 +251,6 @@ func main() {
 	resourceToImport := flag.String("resource", "", "A specific resource type to import")
 	flag.Parse()
 
-	fmt.Printf("*** RUNNING")
-
 	// TODO(jimmy): Bundle these into an object
 	allResources := make(map[string][]*ImportedResource)
 
@@ -263,11 +261,9 @@ func main() {
 
 	// Restrict to a specific resource type, if requested
 	if *resourceToImport != "" {
-		fmt.Printf("***** IMPORTING A LIMITED SET")
 		i := make(map[string]core.Importer)
 		parts := strings.Split(*resourceToImport, ",")
 		for _, p := range parts {
-			fmt.Printf("IMPORT %s\n", p)
 			i[p] = importers[p]
 		}
 
