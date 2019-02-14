@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	aws2 "github.com/terraform-providers/terraform-provider-aws/aws"
-	"github.com/davecgh/go-spew/spew"
 )
 
 type UIInput struct {
